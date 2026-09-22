@@ -657,12 +657,11 @@ async function caricaCrediti(){
   aggiornaDisplayCrediti();
 }
 async function consumaCredito(){
+  // I crediti vengono verificati e scalati realmente lato server (Worker).
+  // Qui aggiorniamo solo il numero mostrato a schermo, per un feedback immediato.
   if(creditiDisponibili === Infinity) return true;
   if(creditiDisponibili < COSTO_ANALISI) return false;
-  const nuovi = creditiDisponibili - COSTO_ANALISI;
-  const {error} = await sb.from('crediti_utente').update({crediti: nuovi}).eq('user_id', currentUser.id);
-  if(error){ console.error('Errore consumo credito:', error); return false; }
-  creditiDisponibili = nuovi; aggiornaDisplayCrediti(); return true;
+  creditiDisponibili -= COSTO_ANALISI; aggiornaDisplayCrediti(); return true;
 }
 function aggiornaDisplayCrediti(){
   const countEl = $('creditiCount'), displayEl = $('creditiDisplay');
@@ -790,28 +789,14 @@ async function startAnalysis(){
   log('🔗 Consolidamento report…','info');$('progTitle').textContent='Consolidamento…';$('progDesc').textContent='Unificazione dati';
   try{S.unified=S.results.length>1?await merge(S.results):S.results[0].data;setP(100);log('✅ Report pronto!','ok');saveReportToSupabase();setTimeout(()=>{$('block-progress').classList.add('hidden');render(S.unified);$('block-results').classList.remove('hidden');$('block-results').scrollIntoView({behavior:'smooth'});},700);}catch(e){log('⚠ Merge parziale: '+e.message,'warn');S.unified=S.results[0].data;saveReportToSupabase();render(S.unified);$('block-progress').classList.add('hidden');$('block-results').classList.remove('hidden');}
   $('analyzeBtn').disabled=false;
+  caricaCrediti(); // risincronizza il numero reale dei crediti dal server (fonte di verità)
 }
 
 async function saveReportToSupabase(){if(!currentUser||!S.unified)return;try{await sb.from('reports').insert({user_id:currentUser.id,file_names:S.files.map(f=>f.name).join(', '),report_data:S.unified});}catch(e){console.error('Salvataggio fallito:',e);}}
 
 function readFile(f){return new Promise((res,rej)=>{const r=new FileReader();if(f.type==='txt'){r.onload=e=>res(e.target.result);r.onerror=()=>rej(new Error('lettura fallita'));r.readAsText(f.file,'utf-8');}else if(['png','jpg','jpeg'].includes(f.type)){r.onload=e=>res('[IMG:'+e.target.result+']');r.onerror=()=>rej(new Error('img fallita'));r.readAsDataURL(f.file);}else if(f.type==='pdf'){r.onload=async e=>{try{const pdf=await pdfjsLib.getDocument({data:e.target.result}).promise;let full='';const maxPages=Math.min(pdf.numPages,60);for(let p=1;p<=maxPages;p++){const page=await pdf.getPage(p);const content=await page.getTextContent();full+=content.items.map(it=>it.str).join(' ')+'\n';}full=full.replace(/\s{3,}/g,' ').trim();if(full.length>80){res(full);}else{const page=await pdf.getPage(1);const viewport=page.getViewport({scale:1.5});const canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;res('[IMG:'+canvas.toDataURL('image/jpeg',0.85)+']');}}catch(err){rej(new Error('lettura PDF fallita'));}};r.onerror=()=>rej(new Error('lettura binaria fallita'));r.readAsArrayBuffer(f.file);}else{r.onload=e=>{const a=new Uint8Array(e.target.result);let t='';for(let i=0;i<a.length;i++){const c=a[i];if((c>=32&&c<=126)||c===10||c===13)t+=String.fromCharCode(c);}const lines=t.split('\n').filter(l=>l.trim().length>6);const cl=lines.join('\n').replace(/\s{3,}/g,' ').trim();res(cl.length>80?cl:'[Testo limitato]');};r.onerror=()=>rej(new Error('lettura fallita'));r.readAsArrayBuffer(f.file);}});}
 
-async function claude(messages,system){
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) throw new Error('Devi effettuare il login.');
-
-  const resp = await fetch(WORKER_URL,{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization': `Bearer ${session.access_token}`   // ← aggiunto
-    },
-    body:JSON.stringify({model:'claude-opus-4-6',max_tokens:4096,system,messages})
-  });
-  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+resp.status);}
-  const d=await resp.json();
-  return d.content?.map(b=>b.text||'').join('')||'';
-}
+async function claude(messages,system){const {data:{session}}=await sb.auth.getSession();if(!session){throw new Error('Devi effettuare il login.');}const resp=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({model:'claude-opus-4-6',max_tokens:4096,system,messages})});if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+resp.status);}const d=await resp.json();return d.content?.map(b=>b.text||'').join('')||'';}
 
 const SYS=`Sei un avvocato esperto in diritto immobiliare ed esecuzioni forzate con 20 anni di esperienza in Italia. Analizza l'avviso di vendita e restituisci SOLO un JSON valido (null per dati mancanti):
 {"procedura":{"tipo":null,"tribunale":null,"rge":null,"giudice":null,"delegato":null,"data_pubblicazione":null},"immobile":{"tipologia":null,"ubicazione":null,"superficie_catastale":null,"foglio":null,"particella":null,"subalterno":null,"categoria_catastale":null,"rendita_catastale":null,"descrizione":null},"economico":{"prezzo_base_prima_asta":null,"prezzo_base_seconda_asta":null,"offerta_minima":null,"valore_stima":null,"rilanci_minimi":null,"cauzione":null,"sconto_percentuale":null},"vincoli":{"ipoteche":null,"trascrizioni":null,"altri_gravami":null,"occupanti":null,"situazione_giuridica_occupanti":null},"modalita_vendita":{"data_prima_asta":null,"data_seconda_asta":null,"termine_offerte":null,"modalita_offerta":null,"modalita_pagamento":null},"analisi_legale":{"completezza_490cpc":null,"criticita":[],"elementi_attenzione":[],"conformita_normativa":null},"rischi":[],"opportunita":[],"valutazione_economica":null,"spese_stimate":null,"giudizio":{"livello_rischio":null,"convenienza":null,"sintesi":null,"raccomandazione":null}}
