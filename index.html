@@ -660,7 +660,7 @@ async function caricaCrediti(){
   if(!currentUser) return;
   if (currentUser.email === 'hobbyimprenditore@gmail.com') { creditiDisponibili = Infinity; aggiornaDisplayCrediti(); return; }
   const {data} = await sb.from('crediti_utente').select('crediti').eq('user_id', currentUser.id).single();
-  if(!data){ await sb.from('crediti_utente').insert({user_id: currentUser.id, crediti: 10, crediti_totali_acquistati: 10}); creditiDisponibili = 10; }
+  if(!data){ await sb.from('crediti_utente').insert({user_id: currentUser.id, crediti: 5, crediti_totali_acquistati: 5}); creditiDisponibili = 5; }
   else { creditiDisponibili = data.crediti; }
   aggiornaDisplayCrediti();
 }
