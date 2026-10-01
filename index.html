@@ -47,6 +47,11 @@
     .hero{background:linear-gradient(135deg,#0f1117 0%,#1e2433 100%);color:white;padding:72px 24px 88px;display:flex;align-items:center;justify-content:center;gap:56px;flex-wrap:wrap}
     .hero-content{max-width:500px}
     .hero-pill{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:100px;padding:6px 16px;font-size:13px;font-weight:600;margin-bottom:22px;color:rgba(255,255,255,.85)}
+.bonus-banner{display:block;max-width:520px;background:linear-gradient(90deg,rgba(22,163,74,.22),rgba(37,99,235,.22));border:1px solid rgba(134,239,172,.45);border-radius:12px;padding:12px 16px;margin:-8px 0 22px;font-size:15px;line-height:1.45;color:#fff}
+.bonus-banner b{color:#86efac;font-size:17px}
+.bonus-banner small{display:block;margin-top:2px;color:rgba(255,255,255,.7);font-size:13px}
+.bonus-mini{background:var(--green-pale);border:1px solid var(--green-mid);color:var(--green);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin:-6px 0 14px}
+.bonus-banner.hidden,.bonus-mini.hidden{display:none}
     .hero h1{font-size:clamp(30px,5vw,50px);font-weight:800;line-height:1.1;margin-bottom:18px;letter-spacing:-.03em}
     .hero-accent{background:linear-gradient(135deg,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .hero-desc{font-size:16px;line-height:1.75;color:rgba(255,255,255,.72);margin-bottom:26px}
@@ -407,6 +412,7 @@
       <form id="formRegister" class="hidden" onsubmit="return handleRegister(event)">
         <h3>Crea il tuo account</h3>
         <p class="m-sub">Necessario per analizzare gli avvisi.</p>
+        <div class="bonus-mini hidden" id="bonusMini"></div>
         <div class="m-field"><label>Email</label><input type="email" id="regEmail" required></div>
         <div class="m-field"><label>Numero di cellulare</label><input type="tel" id="regPhone" required placeholder="+39 333 1234567"></div>
         <div class="m-field"><label>Città di residenza</label><input type="text" id="regCity" required placeholder="es. Milano"></div>
@@ -453,6 +459,7 @@
 <section class="hero">
   <div class="hero-content">
     <div class="hero-pill">🏠 Strumento professionale gratuito</div>
+    <div class="bonus-banner hidden" id="bonusBanner" role="status"></div>
     <h1>Analizza un'asta<br/><span class="hero-accent">in pochi minuti</span></h1>
     <p class="hero-desc">Carica l'avviso di vendita. Il sistema lo legge, lo analizza come un avvocato esperto e ti dice chiaramente se è un buon affare o no.</p>
     <div class="hero-feats">
@@ -660,7 +667,7 @@ async function caricaCrediti(){
   if(!currentUser) return;
   if (currentUser.email === 'hobbyimprenditore@gmail.com') { creditiDisponibili = Infinity; aggiornaDisplayCrediti(); return; }
   const {data} = await sb.from('crediti_utente').select('crediti').eq('user_id', currentUser.id).single();
-  if(!data){ await sb.from('crediti_utente').insert({user_id: currentUser.id, crediti: 5, crediti_totali_acquistati: 5}); creditiDisponibili = 5; }
+  if(!data){ creditiDisponibili = 0; }
   else { creditiDisponibili = data.crediti; }
   aggiornaDisplayCrediti();
 }
@@ -770,7 +777,24 @@ async function handleForgot(e){e.preventDefault();const email=$('forgotEmail').v
 async function handleReset(e){e.preventDefault();const newPassword=$('resetPassword').value;$('resetBtn').disabled=true;const{error:updErr}=await sb.auth.updateUser({password:newPassword});$('resetBtn').disabled=false;if(updErr){showAuthMsg(updErr.message,'err');return false;}showAuthMsg('Password aggiornata!','ok');setTimeout(closeAuthModal,1200);return false;}
 
 // ── UPLOAD & ANALYSIS ──
-document.addEventListener('DOMContentLoaded',()=>{setupDrop();$('fileInput').addEventListener('change',e=>addFiles(Array.from(e.target.files)));initAuth();});
+// ── BONUS PRIMI 100 ISCRITTI (conteggio reale dal database) ──
+async function caricaBonusIscritti(){
+  const banner=$('bonusBanner'), mini=$('bonusMini');
+  try{
+    const {data:posti,error}=await sb.rpc('posti_bonus_rimasti');
+    if(error||typeof posti!=='number') return;
+    if(posti>0){
+      const p = posti===1 ? 'resta solo <b>1</b> posto' : `restano <b>${posti}</b> posti`;
+      banner.innerHTML=`🎁 <strong>Offerta di lancio:</strong> 5 analisi gratuite ai primi 100 iscritti, ${p}.<small>Dopo, i nuovi iscritti riceveranno 3 analisi gratuite.</small>`;
+      mini.textContent = posti===1 ? '🎁 Ultimo posto con 5 analisi gratuite!' : `🎁 Ricevi 5 analisi gratuite: restano ${posti} posti.`;
+    }else{
+      banner.innerHTML='🎁 Registrati e ricevi <b>3</b> analisi gratuite.';
+      mini.textContent='🎁 Ricevi 3 analisi gratuite.';
+    }
+    banner.classList.remove('hidden'); mini.classList.remove('hidden');
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded',()=>{setupDrop();$('fileInput').addEventListener('change',e=>addFiles(Array.from(e.target.files)));initAuth();caricaBonusIscritti();});
 function setupDrop(){const z=$('uploadZone');z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag-over');});z.addEventListener('dragleave',()=>z.classList.remove('drag-over'));z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag-over');addFiles(Array.from(e.dataTransfer.files));});}
 function addFiles(files){const ok=['pdf','txt','doc','docx','png','jpg','jpeg'];for(const f of files){const ext=f.name.split('.').pop().toLowerCase();if(!ok.includes(ext)){alert('Formato non supportato: '+f.name);continue;}if(S.files.find(x=>x.name===f.name))continue;S.files.push({id:'f'+Date.now()+Math.random().toString(36).slice(2,6),file:f,name:f.name,size:f.size,type:ext,text:null,status:'pending'});}renderList();updateBtn();}
 function removeFile(id){S.files=S.files.filter(f=>f.id!==id);renderList();updateBtn();}
