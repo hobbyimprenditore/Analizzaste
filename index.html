@@ -245,6 +245,20 @@
     .site-footer{background:var(--ink);color:rgba(255,255,255,.5);padding:44px 24px;text-align:center}
     .ft-brand{font-size:20px;font-weight:800;color:white;margin-bottom:9px}
     .site-footer p{font-size:13px;margin-bottom:7px}
+    .ft-news{max-width:460px;margin:0 auto 34px;padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.1)}
+    .ft-news-title{font-size:18px;font-weight:800;color:white;margin-bottom:4px}
+    .site-footer .ft-news-sub{font-size:13px;margin-bottom:14px}
+    .ft-news-form{display:flex;gap:8px}
+    .ft-news-form input{flex:1;min-width:0;height:44px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:white;border-radius:var(--r-sm);padding:0 14px;font-family:var(--font);font-size:14px;outline:none}
+    .ft-news-form input::placeholder{color:rgba(255,255,255,.4)}
+    .ft-news-form input:focus{border-color:var(--blue)}
+    .ft-news-form button{height:44px;background:var(--blue);color:white;border:none;border-radius:var(--r-sm);padding:0 20px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer}
+    .ft-news-form button:hover{background:var(--blue-dark)}
+    .ft-news-form button:disabled{opacity:.6;cursor:default}
+    .ft-news-consent{display:flex;gap:8px;align-items:flex-start;justify-content:center;text-align:left;font-size:12px;margin-top:10px;cursor:pointer}
+    .ft-news-consent input{margin-top:2px}
+    .site-footer .ft-news-msg{font-size:13px;margin:10px 0 0;min-height:1em}
+    .ft-news-msg.ok{color:#4ade80}.ft-news-msg.err{color:#f87171}
     .ft-disc{font-size:11px;opacity:.55;line-height:1.6;margin-top:14px}
 
     /* SOCIAL SECTION */
@@ -421,6 +435,10 @@
           <input type="checkbox" id="regTerms" required style="width:auto;margin-top:3px">
           <label for="regTerms" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Dichiaro di aver letto e accettato i <a href="/termini.html" target="_blank">Termini e Condizioni</a>, incluso il disclaimer sui contenuti generati da intelligenza artificiale</label>
         </div>
+        <div class="m-field" style="display:flex;align-items:flex-start;gap:8px">
+          <input type="checkbox" id="regNewsletter" style="width:auto;margin-top:3px">
+          <label for="regNewsletter" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Voglio ricevere la newsletter con novità e consigli sulle aste (facoltativo, puoi disiscriverti quando vuoi)</label>
+        </div>
         <button class="m-submit" type="submit" id="regBtn">Crea account</button>
       </form>
     </div>
@@ -557,6 +575,16 @@
 </div></div></div></div></section>
 
 <footer class="site-footer">
+  <div class="ft-news">
+    <div class="ft-news-title">📬 Iscriviti alla newsletter</div>
+    <p class="ft-news-sub">Novità, guide e consigli sulle aste immobiliari. Niente spam.</p>
+    <form class="ft-news-form" onsubmit="return inviaNewsletter(event)">
+      <input type="email" id="nlEmail" required placeholder="La tua email" aria-label="La tua email" autocomplete="email">
+      <button type="submit" id="nlBtn">Iscriviti</button>
+    </form>
+    <label class="ft-news-consent"><input type="checkbox" id="nlConsent" required> Acconsento a ricevere la newsletter. Posso disiscrivermi in qualsiasi momento.</label>
+    <p id="nlMsg" class="ft-news-msg" role="status"></p>
+  </div>
   <div class="ft-brand">⚖️ </div><p>Analisi Aste Immobiliari — by <strong style="color:#f97316">Hobby Imprenditore</strong> — Powered by Claude AI</p>
   <div class="ft-social-mini">
     <a href="https://www.youtube.com/@HobbyImprenditore?sub_confirmation=1" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
@@ -621,6 +649,20 @@ if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudf
 const SUPABASE_URL='https://hvmnernovucnsksszsbe.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_5bBF51zEshWF3YtBh-YQoA_keV7WfCH';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+// ── NEWSLETTER ──
+async function iscriviNewsletter(email,fonte){
+  const {error}=await sb.from('newsletter_iscritti').insert({email:String(email).trim().toLowerCase(),fonte});
+  if(error && error.code!=='23505') throw error; // 23505 = già iscritto: va bene così
+}
+async function inviaNewsletter(e){
+  e.preventDefault();
+  const msg=document.getElementById('nlMsg'),btn=document.getElementById('nlBtn');
+  if(!document.getElementById('nlConsent').checked){msg.className='ft-news-msg err';msg.textContent='Spunta la casella del consenso per iscriverti.';return false;}
+  btn.disabled=true;msg.className='ft-news-msg';msg.textContent='';
+  try{await iscriviNewsletter(document.getElementById('nlEmail').value,'footer');msg.className='ft-news-msg ok';msg.textContent='Iscrizione completata, grazie! 🎉';e.target.reset();document.getElementById('nlConsent').checked=false;}
+  catch(err){msg.className='ft-news-msg err';msg.textContent='Qualcosa è andato storto, riprova tra poco.';}
+  btn.disabled=false;return false;
+}
 let currentUser=null;
 let pendingSignupEmail=null;
 let isAdmin=false;
@@ -755,7 +797,7 @@ function switchAuthTab(tab){
 }
 function showAuthMsg(msg,type){$('authMsg').innerHTML=`<div class="m-msg ${type}">${esc(msg)}</div>`;}
 function clearAuthMsg(){$('authMsg').innerHTML='';}
-async function handleRegister(e){e.preventDefault();if(!$('regTerms').checked){showAuthMsg('Devi accettare i Termini e Condizioni per registrarti.','err');return false;}const email=$('regEmail').value.trim(),phone=$('regPhone').value.trim(),city=$('regCity').value.trim(),password=$('regPassword').value;$('regBtn').disabled=true;$('regBtn').textContent='Attendere…';const{data,error}=await sb.auth.signUp({email,password,options:{data:{phone,city,terms_accepted:true,terms_accepted_at:new Date().toISOString()}}});$('regBtn').disabled=false;$('regBtn').textContent='Crea account';if(error){showAuthMsg(error.message,'err');return false;}pendingSignupEmail=email;$('viewAuth').classList.add('hidden');$('viewVerifySignup').classList.remove('hidden');$('verifySignupEmail').textContent=email;clearAuthMsg();return false;}
+async function handleRegister(e){e.preventDefault();if(!$('regTerms').checked){showAuthMsg('Devi accettare i Termini e Condizioni per registrarti.','err');return false;}const email=$('regEmail').value.trim(),phone=$('regPhone').value.trim(),city=$('regCity').value.trim(),password=$('regPassword').value;$('regBtn').disabled=true;$('regBtn').textContent='Attendere…';const{data,error}=await sb.auth.signUp({email,password,options:{data:{phone,city,terms_accepted:true,terms_accepted_at:new Date().toISOString()}}});$('regBtn').disabled=false;$('regBtn').textContent='Crea account';if(error){showAuthMsg(error.message,'err');return false;}pendingSignupEmail=email;if($('regNewsletter').checked){iscriviNewsletter(email,'registrazione').catch(()=>{});}$('viewAuth').classList.add('hidden');$('viewVerifySignup').classList.remove('hidden');$('verifySignupEmail').textContent=email;clearAuthMsg();return false;}
 async function resendSignupCode(){if(!pendingSignupEmail)return;const{error}=await sb.auth.resend({type:'signup',email:pendingSignupEmail});showAuthMsg(error?error.message:'Email inviata di nuovo.',error?'err':'ok');}
 async function handleLogin(e){e.preventDefault();const email=$('loginEmail').value.trim(),password=$('loginPassword').value;$('loginBtn').disabled=true;$('loginBtn').textContent='Attendere…';const{data,error}=await sb.auth.signInWithPassword({email,password});$('loginBtn').disabled=false;$('loginBtn').textContent='Accedi';if(error){showAuthMsg(error.message,'err');return false;}closeAuthModal();return false;}
 async function authLogout(){await sb.auth.signOut();}
