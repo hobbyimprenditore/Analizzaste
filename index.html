@@ -259,6 +259,15 @@
     .ft-news-consent input{margin-top:2px}
     .site-footer .ft-news-msg{font-size:13px;margin:10px 0 0;min-height:1em}
     .ft-news-msg.ok{color:#4ade80}.ft-news-msg.err{color:#f87171}
+    /* Banner cookie */
+    .ck-banner{position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:620px;margin:0 auto;background:var(--white);color:var(--ink);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);padding:18px 20px}
+    .ck-banner p{font-size:13px;color:var(--ink-mid);line-height:1.55;margin-bottom:14px}
+    .ck-banner strong{color:var(--ink)}
+    .ck-btns{display:flex;gap:10px;flex-wrap:wrap}
+    .ck-btns button{flex:1;min-width:130px;height:42px;border-radius:var(--r-sm);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;border:2px solid var(--blue)}
+    .ck-acc{background:var(--blue);color:white}
+    .ck-rej{background:white;color:var(--blue)}
+    .ck-link{display:block;margin:8px auto 0;background:none;border:none;color:rgba(255,255,255,.45);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline}
     .ft-disc{font-size:11px;opacity:.55;line-height:1.6;margin-top:14px}
 
     /* SOCIAL SECTION */
@@ -304,7 +313,7 @@
 
     /* Print */
     @media print{
-      .topbar,.hero,.steps,.faq-sec,.site-footer,.exp-btns,.tabs,.res-foot,.btn-reset,.analyze-wrap,.block:not(#block-results),.block-label{display:none!important}
+      .ck-banner,.topbar,.hero,.steps,.faq-sec,.site-footer,.exp-btns,.tabs,.res-foot,.btn-reset,.analyze-wrap,.block:not(#block-results),.block-label{display:none!important}
       .tab-pane{display:block!important}
       .qz-actions,.qz-loading{display:none!important}
       #tp-quotazione:empty{display:none!important}
@@ -370,6 +379,24 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- Google Analytics: si carica SOLO dopo il consenso dell'utente al banner cookie -->
+  <script>
+    (function(){
+      var GA_ID='G-DQREYNEKBJ';
+      function leggiConsenso(){try{return localStorage.getItem('cookie_consent');}catch(e){return null;}}
+      window.caricaAnalytics=function(){
+        if(window.__gaLoaded)return; window.__gaLoaded=true;
+        var s=document.createElement('script'); s.async=true;
+        s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;
+        document.head.appendChild(s);
+        window.dataLayer=window.dataLayer||[];
+        window.gtag=function(){dataLayer.push(arguments);};
+        gtag('js',new Date());
+        gtag('config',GA_ID);
+      };
+      if(leggiConsenso()==='granted')window.caricaAnalytics();
+    })();
+  </script>
 </head>
 <body>
 
@@ -592,6 +619,7 @@
     <a href="mailto:hobbyimprenditore@gmail.com"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
   </div>
   <p class="ft-disc">⚠️ I report sono generati tramite intelligenza artificiale a scopo puramente informativo e non costituiscono consulenza legale professionale ai sensi della L. 247/2012. L'utente è tenuto a verificare le informazioni con un professionista abilitato prima di prendere decisioni. Il Titolare non è responsabile per eventuali imprecisioni nei contenuti generati.</p>
+  <button class="ck-link" type="button" onclick="mostraBannerCookie()">Preferenze cookie</button>
   <span id="adminGear" class="hidden" onclick="openAdminPanel()" style="display:inline-block;margin-top:14px;font-size:13px;color:rgba(255,255,255,.25);cursor:pointer;">⚙</span>
 </footer>
 
@@ -927,6 +955,29 @@ function dl(name,content,mime){const b=new Blob([content],{type:mime+';charset=u
 function setP(pct,title,desc){$('progBar').style.width=pct+'%';if(title)$('progTitle').textContent=title;if(desc)$('progDesc').textContent=desc;}
 function log(msg,type){const el=document.createElement('div');el.className='plog '+(type||'info');el.textContent=msg;$('progLog').appendChild(el);$('progLog').scrollTop=$('progLog').scrollHeight;}
 function esc(s){if(!s)return'';return String(s).replace(/<br\s*\/?>/gi,' ').replace(/<\/?(strong|b|em|i|u|p|span|div|ul|ol|li|h[1-6])(\s[^>]*)?>/gi,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+<div class="ck-banner hidden" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
+  <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina.</p>
+  <div class="ck-btns">
+    <button type="button" class="ck-rej" onclick="sceltaCookie(false)">Rifiuta</button>
+    <button type="button" class="ck-acc" onclick="sceltaCookie(true)">Accetta</button>
+  </div>
+</div>
+<script>
+  function mostraBannerCookie(){document.getElementById('cookieBanner').classList.remove('hidden');}
+  function sceltaCookie(ok){
+    try{localStorage.setItem('cookie_consent',ok?'granted':'denied');}catch(e){}
+    document.getElementById('cookieBanner').classList.add('hidden');
+    if(ok){window.caricaAnalytics();}
+    else if(window.__gaLoaded){
+      // Revoca: cancella i cookie di Analytics e ricarica la pagina senza tracciamento
+      document.cookie.split(';').map(function(c){return c.split('=')[0].trim();}).filter(function(n){return /^_ga/.test(n);}).forEach(function(n){
+        document.cookie=n+'=; Max-Age=0; path=/; domain=.analizzaste.it';document.cookie=n+'=; Max-Age=0; path=/';
+      });
+      location.reload();
+    }
+  }
+  (function(){var c=null;try{c=localStorage.getItem('cookie_consent');}catch(e){}if(c!=='granted'&&c!=='denied')mostraBannerCookie();})();
 </script>
 </body>
 </html>
