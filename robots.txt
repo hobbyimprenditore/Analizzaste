@@ -1,4 +1,24 @@
+# Robots.txt for Analizzaste - Analisi Avvisi di Vendita Immobiliare
+# https://analizzaste.it/
+
+# Allow all robots
 User-agent: *
 Allow: /
+Disallow:
 
+# Specific rules
+Allow: /img/
+Allow: /css/
+
+# Crawl delay (in seconds) for search engines
+Crawl-delay: 1
+
+# Sitemap location
 Sitemap: https://analizzaste.it/sitemap.xml
+
+# Additional rules for specific bots
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 1

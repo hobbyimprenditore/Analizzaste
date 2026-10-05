@@ -481,8 +481,8 @@
       <form id="formLogin" onsubmit="return handleLogin(event)">
         <h3>Bentornato</h3>
         <p class="m-sub">Accedi per usare lo strumento di analisi.</p>
-        <div class="m-field"><label>Email</label><input type="email" id="loginEmail" required></div>
-        <div class="m-field"><label>Password</label><input type="password" id="loginPassword" required></div>
+        <div class="m-field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" required></div>
+        <div class="m-field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" required></div>
         <button class="m-submit" type="submit" id="loginBtn">Accedi</button>
         <div class="m-foot"><button type="button" class="m-link" onclick="switchAuthTab('forgot')">Password dimenticata?</button></div>
       </form>
@@ -490,10 +490,10 @@
         <h3>Crea il tuo account</h3>
         <p class="m-sub">Necessario per analizzare gli avvisi.</p>
         <div class="bonus-mini hidden" id="bonusMini"></div>
-        <div class="m-field"><label>Email</label><input type="email" id="regEmail" required></div>
-        <div class="m-field"><label>Numero di cellulare</label><input type="tel" id="regPhone" required placeholder="+39 333 1234567"></div>
-        <div class="m-field"><label>Città di residenza</label><input type="text" id="regCity" required placeholder="es. Milano"></div>
-        <div class="m-field"><label>Password</label><input type="password" id="regPassword" required minlength="6"></div>
+        <div class="m-field"><label for="regEmail">Email</label><input type="email" id="regEmail" required></div>
+        <div class="m-field"><label for="regPhone">Numero di cellulare</label><input type="tel" id="regPhone" required placeholder="+39 333 1234567"></div>
+        <div class="m-field"><label for="regCity">Città di residenza</label><input type="text" id="regCity" required placeholder="es. Milano"></div>
+        <div class="m-field"><label for="regPassword">Password</label><input type="password" id="regPassword" required minlength="6"></div>
         <div class="m-field" style="display:flex;align-items:flex-start;gap:8px">
           <input type="checkbox" id="regTerms" required style="width:auto;margin-top:3px">
           <label for="regTerms" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Dichiaro di aver letto e accettato i <a href="/termini.html" target="_blank">Termini e Condizioni</a> e la <a href="https://www.iubenda.com/privacy-policy/19835445" target="_blank" rel="noopener">Privacy Policy</a>, incluso il disclaimer sui contenuti generati da intelligenza artificiale</label>
@@ -515,7 +515,7 @@
       <h3>Recupera password</h3>
       <p class="m-sub">Ti invieremo un link via email per reimpostare la password.</p>
       <form onsubmit="return handleForgot(event)">
-        <div class="m-field"><label>Email</label><input type="email" id="forgotEmail" required></div>
+        <div class="m-field"><label for="forgotEmail">Email</label><input type="email" id="forgotEmail" required></div>
         <button class="m-submit" type="submit" id="forgotBtn">Invia link</button>
       </form>
       <div class="m-foot"><button type="button" class="m-link" onclick="switchAuthTab('login')">Torna al login</button></div>
@@ -529,7 +529,7 @@
       <h3>Imposta nuova password</h3>
       <p class="m-sub">Scegli la tua nuova password.</p>
       <form onsubmit="return handleReset(event)">
-        <div class="m-field"><label>Nuova password</label><input type="password" id="resetPassword" required minlength="6"></div>
+        <div class="m-field"><label for="resetPassword">Nuova password</label><input type="password" id="resetPassword" required minlength="6"></div>
         <button class="m-submit" type="submit" id="resetBtn">Reimposta password</button>
       </form>
     </div>
