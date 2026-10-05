@@ -496,7 +496,7 @@
         <div class="m-field"><label for="regPassword">Password</label><input type="password" id="regPassword" required minlength="6"></div>
         <div class="m-field" style="display:flex;align-items:flex-start;gap:8px">
           <input type="checkbox" id="regTerms" required style="width:auto;margin-top:3px">
-          <label for="regTerms" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Dichiaro di aver letto e accettato i <a href="/termini.html" target="_blank">Termini e Condizioni</a> e la <a href="https://www.iubenda.com/privacy-policy/19835445" target="_blank" rel="noopener">Privacy Policy</a>, incluso il disclaimer sui contenuti generati da intelligenza artificiale</label>
+          <label for="regTerms" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Dichiaro di aver letto e accettato i <a href="/termini.html" target="_blank">Termini e Condizioni</a> e la <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>, incluso il disclaimer sui contenuti generati da intelligenza artificiale</label>
         </div>
         <div class="m-field" style="display:flex;align-items:flex-start;gap:8px">
           <input type="checkbox" id="regNewsletter" style="width:auto;margin-top:3px">
@@ -655,7 +655,7 @@
     <a href="mailto:hobbyimprenditore@gmail.com"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
   </div>
   <p class="ft-disc">⚠️ I report sono generati tramite intelligenza artificiale a scopo puramente informativo e non costituiscono consulenza legale professionale ai sensi della L. 247/2012. L'utente è tenuto a verificare le informazioni con un professionista abilitato prima di prendere decisioni. Il Titolare non è responsabile per eventuali imprecisioni nei contenuti generati.</p>
-  <p class="ft-legal" style="font-size:12px;margin-top:10px"><a href="https://www.iubenda.com/privacy-policy/19835445" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Privacy Policy</a> · <a href="https://www.iubenda.com/privacy-policy/19835445/cookie-policy" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Cookie Policy</a> · <a href="/termini.html" style="color:rgba(255,255,255,.6)">Termini e Condizioni</a></p>
+  <p class="ft-legal" style="font-size:12px;margin-top:10px"><a href="/privacy.html" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Privacy Policy</a> · <a href="/privacy.html" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Cookie Policy</a> · <a href="/termini.html" style="color:rgba(255,255,255,.6)">Termini e Condizioni</a></p>
   <button class="ck-link" type="button" onclick="mostraBannerCookie()">Preferenze cookie</button>
   <span id="adminGear" class="hidden" onclick="openAdminPanel()" style="display:inline-block;margin-top:14px;font-size:13px;color:rgba(255,255,255,.25);cursor:pointer;">⚙</span>
 </footer>
@@ -994,7 +994,7 @@ function log(msg,type){const el=document.createElement('div');el.className='plog
 function esc(s){if(!s)return'';return String(s).replace(/<br\s*\/?>/gi,' ').replace(/<\/?(strong|b|em|i|u|p|span|div|ul|ol|li|h[1-6])(\s[^>]*)?>/gi,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 <div class="ck-banner hidden" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
-  <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina. Dettagli nella <a href="https://www.iubenda.com/privacy-policy/19835445/cookie-policy" target="_blank" rel="noopener">Cookie Policy</a>.</p>
+  <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina. Dettagli nella <a href="/privacy.html" target="_blank" rel="noopener">Cookie Policy</a>.</p>
   <div class="ck-btns">
     <button type="button" class="ck-rej" onclick="sceltaCookie(false)">Rifiuta</button>
     <button type="button" class="ck-acc" onclick="sceltaCookie(true)">Accetta</button>
