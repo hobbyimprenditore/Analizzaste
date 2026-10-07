@@ -460,6 +460,7 @@
       </div>
       <div class="user-badge hidden" id="userBadge">
         <span class="u-email" id="userEmail"></span>
+        <button onclick="apriModaleCollaborazione()" class="u-donate" title="Collabora con noi" style="background:#e8f5e9;color:#2e7d32;border:none">🤝 Collabora</button>
         <button onclick="apriModaleDonazione()" class="u-donate" title="Dona e ricevi crediti">❤️ Dona</button>
         <button class="u-logout" onclick="requestAccountDeletion()">Elimina account</button>
         <button class="u-logout" onclick="authLogout()">Esci</button>
@@ -709,6 +710,58 @@
   </div>
 </div>
 
+<!-- MODALE COLLABORAZIONE -->
+<div class="modal-back hidden" id="modalCollaborazioneBack" onclick="if(event.target===this)chiudiModaleCollaborazione()">
+  <div class="modal-box" style="max-width:680px;max-height:85vh;overflow-y:auto">
+    <button class="m-close" onclick="chiudiModaleCollaborazione()">✕</button>
+    <h3>🤝 Collabora con Analizzaste</h3>
+    <p class="m-sub">Siamo alla ricerca di professionisti esperti nel settore immobiliare per crescere insieme in questo progetto innovativo.</p>
+
+    <div style="background:var(--blue-pale);border:1px solid var(--blue-mid);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--ink-mid)">
+      ℹ️ Compila il modulo qui sotto: riceverai maggiori informazioni sulle opportunità di collaborazione.
+    </div>
+
+    <form id="formCollaborazione" onsubmit="return handleCollaborazione(event)">
+      <!-- DATI PERSONALI -->
+      <div style="margin-bottom:20px">
+        <div style="font-weight:700;font-size:13px;color:var(--blue);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--blue-mid)">📋 Dati personali</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="m-field"><label for="collabo_nome">Nome</label><input type="text" id="collabo_nome" required placeholder="Marco"></div>
+          <div class="m-field"><label for="collabo_cognome">Cognome</label><input type="text" id="collabo_cognome" required placeholder="Rossi"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="m-field"><label for="collabo_email">Email</label><input type="email" id="collabo_email" required placeholder="marco@email.com"></div>
+          <div class="m-field"><label for="collabo_tel">Telefono</label><input type="tel" id="collabo_tel" required placeholder="+39 333 1234567"></div>
+        </div>
+      </div>
+
+      <!-- PROFESSIONE -->
+      <div style="margin-bottom:20px">
+        <div style="font-weight:700;font-size:13px;color:var(--blue);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--blue-mid)">💼 Professione</div>
+        <div class="m-field"><label for="collabo_prof">Figura professionale</label><select id="collabo_prof" required style="width:100%;padding:11px 14px;border:1px solid var(--border-mid);border-radius:var(--r-sm);font-family:var(--font);font-size:14px"><option value="">— Seleziona —</option><option value="agente">Agente immobiliare</option><option value="consulente">Consulente investimenti</option><option value="investitore">Investitore</option><option value="avvocato">Avvocato</option><option value="geometra">Geometra/Ingegnere</option><option value="commercialista">Commercialista</option><option value="stimatore">Stimatore</option><option value="architetto">Architetto</option><option value="rendering">Specialista rendering</option><option value="influencer">Influencer</option><option value="notaio">Notaio</option><option value="altro">Altro</option></select></div>
+        <div class="m-field"><label for="collabo_esp">Anni di esperienza</label><select id="collabo_esp" required style="width:100%;padding:11px 14px;border:1px solid var(--border-mid);border-radius:var(--r-sm);font-family:var(--font);font-size:14px"><option value="">— Seleziona —</option><option value="0-2">Meno di 2 anni</option><option value="2-5">2-5 anni</option><option value="5-10">5-10 anni</option><option value="10-15">10-15 anni</option><option value="15+">Più di 15 anni</option></select></div>
+      </div>
+
+      <!-- CHI SEI -->
+      <div style="margin-bottom:20px">
+        <div style="font-weight:700;font-size:13px;color:var(--blue);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--blue-mid)">🌟 Chi sei</div>
+        <div class="m-field"><label for="collabo_racconto">Raccontami chi sei e dove vuoi andare</label><textarea id="collabo_racconto" required style="width:100%;padding:11px 14px;border:1px solid var(--border-mid);border-radius:var(--r-sm);font-family:var(--font);font-size:14px;min-height:90px;resize:vertical" placeholder="La tua storia, motivazioni e visione nel settore..."></textarea></div>
+      </div>
+
+      <!-- LINK PROFESSIONALI -->
+      <div class="m-field"><label for="collabo_link">Link professionali (LinkedIn, sito, etc.)</label><input type="url" id="collabo_link" placeholder="https://linkedin.com/in/..." style="width:100%;padding:11px 14px;border:1px solid var(--border-mid);border-radius:var(--r-sm);font-family:var(--font);font-size:14px"></div>
+
+      <!-- CONSENSO -->
+      <div style="background:var(--blue-pale);border:1px solid var(--blue-mid);border-radius:var(--r-sm);padding:12px 14px;margin:16px 0;font-size:12px;color:var(--ink-mid)">
+        Accetti i nostri <a href="/termini.html" target="_blank" style="color:var(--blue);font-weight:600">Termini</a> e la <a href="/privacy.html" target="_blank" style="color:var(--blue);font-weight:600">Privacy</a>.
+      </div>
+
+      <button class="m-submit" type="submit" style="background:linear-gradient(135deg,#16a34a,#15803d)">📧 Invia e ricevi maggiori informazioni</button>
+      <p style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:10px">Riceverai una risposta entro 3-5 giorni lavorativi.</p>
+    </form>
+  </div>
+</div>
+
 <script>
 'use strict';
 
@@ -859,6 +912,65 @@ function apriModaleDonazione(){
   });
 }
 function chiudiModaleDonazione(){ $('modalDonazioneBack').classList.add('hidden'); }
+
+// ── COLLABORAZIONE ──
+function apriModaleCollaborazione(){
+  if(!currentUser){ openAuthModal('login'); return; }
+  $('modalCollaborazioneBack').classList.remove('hidden');
+}
+function chiudiModaleCollaborazione(){
+  $('modalCollaborazioneBack').classList.add('hidden');
+  $('formCollaborazione').reset();
+}
+async function handleCollaborazione(event){
+  event.preventDefault();
+
+  const nome = $('collabo_nome').value.trim();
+  const cognome = $('collabo_cognome').value.trim();
+  const email = $('collabo_email').value.trim();
+  const telefono = $('collabo_tel').value.trim();
+  const professione = $('collabo_prof').value;
+  const esperienza = $('collabo_esp').value;
+  const racconto = $('collabo_racconto').value.trim();
+  const link = $('collabo_link').value.trim();
+
+  // Validazione base
+  if(!nome || !cognome || !email || !telefono || !professione || !esperienza || !racconto){
+    alert('Per favore compila tutti i campi obbligatori.');
+    return false;
+  }
+
+  try {
+    // Inserisci i dati in Supabase
+    const {error} = await sb.from('collaborazioni').insert({
+      user_id: currentUser.id,
+      nome,
+      cognome,
+      email,
+      telefono,
+      professione,
+      esperienza,
+      racconto,
+      link: link || null,
+      created_at: new Date().toISOString()
+    });
+
+    if(error){
+      console.error('Errore inserimento:', error);
+      alert('Errore durante l\'invio: ' + (error.message || 'riprova più tardi'));
+      return false;
+    }
+
+    // Successo: mostra messaggio e chiudi modal
+    alert('✅ Grazie! Abbiamo ricevuto la tua candidatura. Ti contatteremo presto per discutere le opportunità di collaborazione.');
+    chiudiModaleCollaborazione();
+    return false;
+  } catch(err){
+    console.error('Errore:', err);
+    alert('Errore durante l\'invio. Riprova tra poco.');
+    return false;
+  }
+}
 
 // ── AUTH UI ──
 function topCtaClick(e){ if(!currentUser){e.preventDefault();openAuthModal('login');return false;} return true; }
