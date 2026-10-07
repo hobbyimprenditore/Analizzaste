@@ -9,11 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping database Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -e
 
-          SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
           MAX_ATTEMPTS=3
           ATTEMPT=1
 
@@ -49,6 +50,3 @@ jobs:
 
           echo "❌ Errore: Tutti i tentativi falliti. Codice HTTP finale: $HTTP_CODE"
           exit 1
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
