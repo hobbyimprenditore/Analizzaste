@@ -2,10 +2,6 @@ name: Supabase Keep Alive
 on:
   schedule:
     - cron: '0 8 */3 * *'
-name: Supabase Keep Alive
-on:
-  schedule:
-    - cron: '0 8 */3 * *'
   workflow_dispatch:
 
 jobs:
@@ -15,53 +11,44 @@ jobs:
       - name: Ping database Supabase
         run: |
           set -e
-          
+
           SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
           SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
           MAX_ATTEMPTS=3
           ATTEMPT=1
-          
+
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "❌ Errore: SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY non configurati"
             exit 1
           fi
-          
+
           while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
             echo "📍 Tentativo $ATTEMPT/$MAX_ATTEMPTS..."
-            
+
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               --max-time 10 \
               --connect-timeout 5 \
               "${SUPABASE_URL}/rest/v1/reports?select=id&limit=1" \
               -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
               -H "Content-Type: application/json")
-            
+
             echo "Risposta HTTP: $HTTP_CODE"
-            
+
             if [ "$HTTP_CODE" = "200" ]; then
               echo "✅ Keep alive riuscito! Database attivo."
               exit 0
             fi
-            
+
             if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
               echo "⏳ Retry tra 5 secondi..."
               sleep 5
             fi
-            
+
             ATTEMPT=$((ATTEMPT + 1))
           done
-          
+
           echo "❌ Errore: Tutti i tentativi falliti. Codice HTTP finale: $HTTP_CODE"
           exit 1
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}  workflow_dispatch:
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ping database analizzaste.it
-        run: |
-          CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://hvmnernovucnsksszsbe.supabase.co/rest/v1/reports?select=id&limit=1" -H "apikey: sb_publishable_5bBF51zEshWF3YtBh-YQoA_keV7WfCH")
-          echo "Risposta: $CODE"
-          [ "$CODE" = "200" ]
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
