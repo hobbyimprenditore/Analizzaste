@@ -1203,6 +1203,11 @@ function initVideoIntro(){
     // Altrimenti mostra il video
     overlay.classList.remove('hidden');
 
+    // Entra in fullscreen per permettere l'autoplay audio
+    if(overlay.requestFullscreen){
+      overlay.requestFullscreen().catch(err=>console.log('Fullscreen non disponibile'));
+    }
+
     // Timeout per mostrare errore se video non carica entro 8 secondi
     let videoLoadedOrError=false;
     const errorTimeout=setTimeout(()=>{
@@ -1218,14 +1223,14 @@ function initVideoIntro(){
       clearTimeout(errorTimeout);
     },{once:true});
 
-    // Tenta di far partire il video con error handling
-    // Mantiene muted per l'autoplay (requisito browser)
-    player.muted=true;
+    // Tenta di far partire il video
+    // In fullscreen, unmuta per permettere l'audio
+    player.muted=false;
     const playPromise=player.play();
     if(playPromise!==undefined){
       playPromise.catch(err=>{
         console.log('Autoplay bloccato',err);
-        // Riprova con muted
+        // Fallback: muta e riprova
         player.muted=true;
         player.play().catch(e=>console.log('Secondo tentativo fallito:',e));
       });
@@ -1241,8 +1246,13 @@ function initVideoIntro(){
     });
 
 
-    // Auto-chiudi quando il video finisce
-    player.addEventListener('ended',handleVideoEnd);
+    // Auto-chiudi quando il video finisce e esci da fullscreen
+    player.addEventListener('ended',()=>{
+      if(document.fullscreenElement){
+        document.exitFullscreen().catch(()=>{});
+      }
+      handleVideoEnd();
+    });
 
     // Listener per errori di caricamento
     player.addEventListener('error',(e)=>{
