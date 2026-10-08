@@ -66,8 +66,10 @@
     .hidden{display:none!important}
 
     /* VIDEO INTRO */
-    .video-intro-overlay{position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+    @keyframes fadeOutDissolvenza{0%{opacity:1}100%{opacity:0}}
+    .video-intro-overlay{position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .6s ease-out}
     .video-intro-overlay.hidden{display:none!important}
+    .video-intro-overlay.fade-out{animation:fadeOutDissolvenza .6s ease-out forwards}
     .video-intro-player{width:100%;height:100%;object-fit:contain;max-width:100vw;max-height:100vh}
     .video-skip-btn{position:fixed;bottom:30px;right:30px;padding:10px 20px;background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4);border-radius:8px;font-weight:600;cursor:pointer;z-index:10000;transition:all .2s;font-size:14px}
     .video-skip-btn:hover{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.6)}
@@ -1271,9 +1273,17 @@ function handleVideoSkip(){
       localStorage.setItem('video_intro_skipped','true');
     }
 
-    // Ferma il video e nascondi l'overlay
+    // Ferma il video
     if(player){player.pause();}
-    if(overlay){overlay.classList.add('hidden');}
+
+    // Applica animazione di dissolvenza e poi nascondi
+    if(overlay){
+      overlay.classList.add('fade-out');
+      setTimeout(()=>{
+        overlay.classList.add('hidden');
+        overlay.classList.remove('fade-out');
+      },600);
+    }
   }catch(e){
     console.error('Errore skip video:',e);
   }
@@ -1282,7 +1292,13 @@ function handleVideoSkip(){
 function handleVideoEnd(){
   try{
     const overlay=$('videoIntroOverlay');
-    if(overlay){overlay.classList.add('hidden');}
+    if(overlay){
+      overlay.classList.add('fade-out');
+      setTimeout(()=>{
+        overlay.classList.add('hidden');
+        overlay.classList.remove('fade-out');
+      },600);
+    }
   }catch(e){
     console.error('Errore fine video:',e);
   }
