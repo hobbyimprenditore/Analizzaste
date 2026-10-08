@@ -1222,20 +1222,29 @@ function initVideoIntro(){
     player.addEventListener('loadeddata',()=>{
       videoLoadedOrError=true;
       clearTimeout(errorTimeout);
-      // Rimuovi mute per sentire l'audio
-      player.muted=false;
     },{once:true});
 
     // Tenta di far partire il video con error handling
+    // Mantiene muted per l'autoplay (requisito browser)
+    player.muted=true;
     const playPromise=player.play();
     if(playPromise!==undefined){
       playPromise.catch(err=>{
-        console.log('Autoplay bloccato, video in mute mode',err);
-        // Tenta un nuovo play in caso il mute non sia stato applicato
+        console.log('Autoplay bloccato',err);
+        // Riprova con muted
         player.muted=true;
         player.play().catch(e=>console.log('Secondo tentativo fallito:',e));
       });
     }
+
+    // Consenti all'utente di unmutare cliccando sul video
+    player.addEventListener('click',()=>{
+      if(player.muted){
+        player.muted=false;
+      }else{
+        player.muted=true;
+      }
+    });
 
     // Mostra pulsante "Salta" dopo 3 secondi
     setTimeout(()=>{
