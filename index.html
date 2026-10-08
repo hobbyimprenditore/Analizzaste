@@ -71,9 +71,6 @@
     .video-intro-overlay.hidden{display:none!important}
     .video-intro-overlay.fade-out{animation:fadeOutDissolvenza .6s ease-out forwards}
     .video-intro-player{width:100%;height:100%;object-fit:contain;max-width:100vw;max-height:100vh}
-    .video-skip-btn{position:fixed;bottom:30px;right:30px;padding:10px 20px;background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4);border-radius:8px;font-weight:600;cursor:pointer;z-index:10000;transition:all .2s;font-size:14px}
-    .video-skip-btn:hover{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.6)}
-    .video-skip-btn.hidden{display:none!important}
     .video-checkbox-wrap{position:fixed;bottom:30px;left:30px;color:white;display:flex;align-items:center;gap:8px;font-size:13px;z-index:10000;background:rgba(0,0,0,.3);padding:8px 12px;border-radius:6px}
     .video-checkbox-wrap input[type="checkbox"]{cursor:pointer;accent-color:var(--blue)}
     .video-checkbox-wrap label{cursor:pointer;user-select:none}
@@ -502,7 +499,6 @@
     <div style="font-size:18px;margin-bottom:10px">⚠️ Impossibile caricare il video</div>
     <button onclick="handleVideoSkip()" style="background:#0070ba;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer">Continua</button>
   </div>
-  <button class="video-skip-btn hidden" id="videoSkipBtn" onclick="handleVideoSkip()">Salta</button>
   <div class="video-checkbox-wrap">
     <input type="checkbox" id="videoSkipNext" />
     <label for="videoSkipNext">Non mostrare più</label>
@@ -1194,7 +1190,6 @@ function initVideoIntro(){
     const videoSkipped=localStorage.getItem('video_intro_skipped');
     const overlay=$('videoIntroOverlay');
     const player=$('videoIntroPlayer');
-    const skipBtn=$('videoSkipBtn');
     const errorMsg=$('videoErrorMsg');
 
     if(!overlay || !player){console.warn('Video intro elements not found');return;}
@@ -1214,7 +1209,6 @@ function initVideoIntro(){
       if(!videoLoadedOrError && !overlay.classList.contains('hidden')){
         console.warn('Video timeout: file non caricato in tempo');
         if(errorMsg)errorMsg.style.display='block';
-        skipBtn.classList.add('hidden');
       }
     },8000);
 
@@ -1246,12 +1240,6 @@ function initVideoIntro(){
       }
     });
 
-    // Mostra pulsante "Salta" dopo 3 secondi
-    setTimeout(()=>{
-      if(!overlay.classList.contains('hidden') && errorMsg.style.display!=='block'){
-        skipBtn.classList.remove('hidden');
-      }
-    },3000);
 
     // Auto-chiudi quando il video finisce
     player.addEventListener('ended',handleVideoEnd);
@@ -1263,7 +1251,6 @@ function initVideoIntro(){
       console.error('Errore caricamento video:',e);
       console.error('Video src:', player.src || (player.querySelector('source')?.src));
       if(errorMsg)errorMsg.style.display='block';
-      skipBtn.classList.add('hidden');
     });
 
     console.log('Video intro initialized. Video src:', player.querySelector('source')?.src);
