@@ -1190,6 +1190,19 @@ function initVideoIntro(){
 
     if(!overlay || !player){console.warn('Video intro elements not found');return;}
 
+    // Determina il video in base al device (mobile < 768px)
+    const isMobile=window.innerWidth<768;
+    const videoSrc=isMobile
+      ? '/img/analizzaste-spot-mobile.mp4?v=1'
+      : '/img/analizzaste-spot-1920x1080.mp4?v=3';
+
+    // Imposta il src del video
+    const sourceElement=player.querySelector('source');
+    if(sourceElement){
+      sourceElement.src=videoSrc;
+      player.load(); // Ricarica il video con la nuova sorgente
+    }
+
     // Se utente ha scelto di saltare in futuro, nascondi subito l'overlay
     if(videoSkipped==='true'){
       overlay.classList.add('hidden');
