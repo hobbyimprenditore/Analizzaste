@@ -1,4 +1,6 @@
 {
+  "buildCommand": "echo 'Static files build'",
+  "outputDirectory": "public",
   "headers": [
     {
       "source": "/(.*)",
