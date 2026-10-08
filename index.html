@@ -493,10 +493,13 @@
 
 <!-- VIDEO INTRO OVERLAY -->
 <div class="video-intro-overlay hidden" id="videoIntroOverlay">
-  <video id="videoIntroPlayer" class="video-intro-player" muted playsinline crossorigin="anonymous">
-    <source src="/analizzaste-spot-1920x1080.mp4" type="video/mp4">
-    Il tuo browser non supporta il video HTML5.
+  <video id="videoIntroPlayer" class="video-intro-player" muted playsinline>
+    <source src="./analizzaste-spot-1920x1080.mp4" type="video/mp4">
   </video>
+  <div id="videoErrorMsg" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:white;text-align:center;z-index:10001;display:none">
+    <div style="font-size:18px;margin-bottom:10px">⚠️ Impossibile caricare il video</div>
+    <button onclick="handleVideoSkip()" style="background:#0070ba;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer">Continua</button>
+  </div>
   <button class="video-skip-btn hidden" id="videoSkipBtn" onclick="handleVideoSkip()">Salta</button>
   <div class="video-checkbox-wrap">
     <input type="checkbox" id="videoSkipNext" />
@@ -1190,6 +1193,7 @@ function initVideoIntro(){
     const overlay=$('videoIntroOverlay');
     const player=$('videoIntroPlayer');
     const skipBtn=$('videoSkipBtn');
+    const errorMsg=$('videoErrorMsg');
 
     if(!overlay || !player){console.warn('Video intro elements not found');return;}
 
@@ -1201,6 +1205,22 @@ function initVideoIntro(){
 
     // Altrimenti mostra il video
     overlay.classList.remove('hidden');
+
+    // Timeout per mostrare errore se video non carica entro 8 secondi
+    let videoLoadedOrError=false;
+    const errorTimeout=setTimeout(()=>{
+      if(!videoLoadedOrError && !overlay.classList.contains('hidden')){
+        console.warn('Video timeout: file non caricato in tempo');
+        if(errorMsg)errorMsg.style.display='block';
+        skipBtn.classList.add('hidden');
+      }
+    },8000);
+
+    // Ascoltare quando il video è pronto
+    player.addEventListener('loadeddata',()=>{
+      videoLoadedOrError=true;
+      clearTimeout(errorTimeout);
+    },{once:true});
 
     // Tenta di far partire il video con error handling
     const playPromise=player.play();
@@ -1215,7 +1235,7 @@ function initVideoIntro(){
 
     // Mostra pulsante "Salta" dopo 3 secondi
     setTimeout(()=>{
-      if(!overlay.classList.contains('hidden')){
+      if(!overlay.classList.contains('hidden') && errorMsg.style.display!=='block'){
         skipBtn.classList.remove('hidden');
       }
     },3000);
@@ -1223,11 +1243,17 @@ function initVideoIntro(){
     // Auto-chiudi quando il video finisce
     player.addEventListener('ended',handleVideoEnd);
 
-    // Aggiungi error listener per debug
+    // Listener per errori di caricamento
     player.addEventListener('error',(e)=>{
+      videoLoadedOrError=true;
+      clearTimeout(errorTimeout);
       console.error('Errore caricamento video:',e);
-      overlay.classList.add('hidden');
+      console.error('Video src:', player.src || (player.querySelector('source')?.src));
+      if(errorMsg)errorMsg.style.display='block';
+      skipBtn.classList.add('hidden');
     });
+
+    console.log('Video intro initialized. Video src:', player.querySelector('source')?.src);
 
   }catch(e){
     console.error('Errore nella inizializzazione del video intro:',e);
