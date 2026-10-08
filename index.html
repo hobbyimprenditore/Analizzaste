@@ -65,6 +65,17 @@
     .container{max-width:960px;margin:0 auto;padding:0 24px}
     .hidden{display:none!important}
 
+    /* VIDEO INTRO */
+    .video-intro-overlay{position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+    .video-intro-overlay.hidden{display:none!important}
+    .video-intro-player{width:100%;height:100%;object-fit:contain;max-width:100vw;max-height:100vh}
+    .video-skip-btn{position:fixed;bottom:30px;right:30px;padding:10px 20px;background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4);border-radius:8px;font-weight:600;cursor:pointer;z-index:10000;transition:all .2s;font-size:14px}
+    .video-skip-btn:hover{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.6)}
+    .video-skip-btn.hidden{display:none!important}
+    .video-checkbox-wrap{position:fixed;bottom:30px;left:30px;color:white;display:flex;align-items:center;gap:8px;font-size:13px;z-index:10000;background:rgba(0,0,0,.3);padding:8px 12px;border-radius:6px}
+    .video-checkbox-wrap input[type="checkbox"]{cursor:pointer;accent-color:var(--blue)}
+    .video-checkbox-wrap label{cursor:pointer;user-select:none}
+
     /* TOPBAR */
     .topbar{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm)}
     .topbar-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
@@ -479,6 +490,18 @@
   </script>
 </head>
 <body>
+
+<!-- VIDEO INTRO OVERLAY -->
+<div class="video-intro-overlay hidden" id="videoIntroOverlay">
+  <video id="videoIntroPlayer" class="video-intro-player" autoplay muted playsinline>
+    <source src="/analizzaste-spot-1920x1080.mp4" type="video/mp4">
+  </video>
+  <button class="video-skip-btn hidden" id="videoSkipBtn" onclick="handleVideoSkip()">Salta</button>
+  <div class="video-checkbox-wrap">
+    <input type="checkbox" id="videoSkipNext" />
+    <label for="videoSkipNext">Non mostrare più</label>
+  </div>
+</div>
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -1158,6 +1181,57 @@ function dl(name,content,mime){const b=new Blob([content],{type:mime+';charset=u
 function setP(pct,title,desc){$('progBar').style.width=pct+'%';if(title)$('progTitle').textContent=title;if(desc)$('progDesc').textContent=desc;}
 function log(msg,type){const el=document.createElement('div');el.className='plog '+(type||'info');el.textContent=msg;$('progLog').appendChild(el);$('progLog').scrollTop=$('progLog').scrollHeight;}
 function esc(s){if(!s)return'';return String(s).replace(/<br\s*\/?>/gi,' ').replace(/<\/?(strong|b|em|i|u|p|span|div|ul|ol|li|h[1-6])(\s[^>]*)?>/gi,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── VIDEO INTRO ──
+function initVideoIntro(){
+  const videoSkipped=localStorage.getItem('video_intro_skipped');
+  const overlay=$('videoIntroOverlay');
+  const player=$('videoIntroPlayer');
+  const skipBtn=$('videoSkipBtn');
+
+  // Se utente ha scelto di saltare in futuro, nascondi subito l'overlay
+  if(videoSkipped==='true'){
+    overlay.classList.add('hidden');
+    return;
+  }
+
+  // Altrimenti mostra il video
+  overlay.classList.remove('hidden');
+  player.play();
+
+  // Mostra pulsante "Salta" dopo 3 secondi
+  setTimeout(()=>{
+    if(!overlay.classList.contains('hidden')){
+      skipBtn.classList.remove('hidden');
+    }
+  },3000);
+
+  // Auto-chiudi quando il video finisce
+  player.addEventListener('ended',handleVideoEnd);
+}
+
+function handleVideoSkip(){
+  const overlay=$('videoIntroOverlay');
+  const checkbox=$('videoSkipNext');
+  const player=$('videoIntroPlayer');
+
+  // Se checkbox è spuntato, ricorda la scelta
+  if(checkbox.checked){
+    localStorage.setItem('video_intro_skipped','true');
+  }
+
+  // Ferma il video e nascondi l'overlay
+  player.pause();
+  overlay.classList.add('hidden');
+}
+
+function handleVideoEnd(){
+  const overlay=$('videoIntroOverlay');
+  overlay.classList.add('hidden');
+}
+
+// Inizializza il video intro al caricamento della pagina
+window.addEventListener('load',initVideoIntro);
 </script>
 <div class="ck-banner hidden" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
   <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina. Dettagli nella <a href="/privacy.html" target="_blank" rel="noopener">Cookie Policy</a>.</p>
