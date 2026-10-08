@@ -493,8 +493,9 @@
 
 <!-- VIDEO INTRO OVERLAY -->
 <div class="video-intro-overlay hidden" id="videoIntroOverlay">
-  <video id="videoIntroPlayer" class="video-intro-player" autoplay muted playsinline>
+  <video id="videoIntroPlayer" class="video-intro-player" muted playsinline crossorigin="anonymous">
     <source src="/analizzaste-spot-1920x1080.mp4" type="video/mp4">
+    Il tuo browser non supporta il video HTML5.
   </video>
   <button class="video-skip-btn hidden" id="videoSkipBtn" onclick="handleVideoSkip()">Salta</button>
   <div class="video-checkbox-wrap">
@@ -1184,54 +1185,89 @@ function esc(s){if(!s)return'';return String(s).replace(/<br\s*\/?>/gi,' ').repl
 
 // ── VIDEO INTRO ──
 function initVideoIntro(){
-  const videoSkipped=localStorage.getItem('video_intro_skipped');
-  const overlay=$('videoIntroOverlay');
-  const player=$('videoIntroPlayer');
-  const skipBtn=$('videoSkipBtn');
+  try{
+    const videoSkipped=localStorage.getItem('video_intro_skipped');
+    const overlay=$('videoIntroOverlay');
+    const player=$('videoIntroPlayer');
+    const skipBtn=$('videoSkipBtn');
 
-  // Se utente ha scelto di saltare in futuro, nascondi subito l'overlay
-  if(videoSkipped==='true'){
-    overlay.classList.add('hidden');
-    return;
-  }
+    if(!overlay || !player){console.warn('Video intro elements not found');return;}
 
-  // Altrimenti mostra il video
-  overlay.classList.remove('hidden');
-  player.play();
-
-  // Mostra pulsante "Salta" dopo 3 secondi
-  setTimeout(()=>{
-    if(!overlay.classList.contains('hidden')){
-      skipBtn.classList.remove('hidden');
+    // Se utente ha scelto di saltare in futuro, nascondi subito l'overlay
+    if(videoSkipped==='true'){
+      overlay.classList.add('hidden');
+      return;
     }
-  },3000);
 
-  // Auto-chiudi quando il video finisce
-  player.addEventListener('ended',handleVideoEnd);
+    // Altrimenti mostra il video
+    overlay.classList.remove('hidden');
+
+    // Tenta di far partire il video con error handling
+    const playPromise=player.play();
+    if(playPromise!==undefined){
+      playPromise.catch(err=>{
+        console.log('Autoplay bloccato, video in mute mode',err);
+        // Tenta un nuovo play in caso il mute non sia stato applicato
+        player.muted=true;
+        player.play().catch(e=>console.log('Secondo tentativo fallito:',e));
+      });
+    }
+
+    // Mostra pulsante "Salta" dopo 3 secondi
+    setTimeout(()=>{
+      if(!overlay.classList.contains('hidden')){
+        skipBtn.classList.remove('hidden');
+      }
+    },3000);
+
+    // Auto-chiudi quando il video finisce
+    player.addEventListener('ended',handleVideoEnd);
+
+    // Aggiungi error listener per debug
+    player.addEventListener('error',(e)=>{
+      console.error('Errore caricamento video:',e);
+      overlay.classList.add('hidden');
+    });
+
+  }catch(e){
+    console.error('Errore nella inizializzazione del video intro:',e);
+  }
 }
 
 function handleVideoSkip(){
-  const overlay=$('videoIntroOverlay');
-  const checkbox=$('videoSkipNext');
-  const player=$('videoIntroPlayer');
+  try{
+    const overlay=$('videoIntroOverlay');
+    const checkbox=$('videoSkipNext');
+    const player=$('videoIntroPlayer');
 
-  // Se checkbox è spuntato, ricorda la scelta
-  if(checkbox.checked){
-    localStorage.setItem('video_intro_skipped','true');
+    // Se checkbox è spuntato, ricorda la scelta
+    if(checkbox && checkbox.checked){
+      localStorage.setItem('video_intro_skipped','true');
+    }
+
+    // Ferma il video e nascondi l'overlay
+    if(player){player.pause();}
+    if(overlay){overlay.classList.add('hidden');}
+  }catch(e){
+    console.error('Errore skip video:',e);
   }
-
-  // Ferma il video e nascondi l'overlay
-  player.pause();
-  overlay.classList.add('hidden');
 }
 
 function handleVideoEnd(){
-  const overlay=$('videoIntroOverlay');
-  overlay.classList.add('hidden');
+  try{
+    const overlay=$('videoIntroOverlay');
+    if(overlay){overlay.classList.add('hidden');}
+  }catch(e){
+    console.error('Errore fine video:',e);
+  }
 }
 
 // Inizializza il video intro al caricamento della pagina
-window.addEventListener('load',initVideoIntro);
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',initVideoIntro);
+}else{
+  initVideoIntro();
+}
 </script>
 <div class="ck-banner hidden" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
   <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina. Dettagli nella <a href="/privacy.html" target="_blank" rel="noopener">Cookie Policy</a>.</p>
