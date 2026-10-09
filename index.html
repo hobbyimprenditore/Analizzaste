@@ -36,6 +36,135 @@
     "creator": {"@type": "Organization", "name": "Hobby Imprenditore", "sameAs": ["https://www.youtube.com/@HobbyImprenditore", "https://www.instagram.com/hobby_imprenditore/"]}
   }
   </script>
+  <!-- Google Analytics 4 with Enhanced Event Tracking -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DQREYNEKBJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-DQREYNEKBJ', {
+      'page_title': document.title,
+      'page_location': window.location.href,
+      'language': navigator.language,
+      'send_page_view': true
+    });
+
+    // ── Enhanced Event Tracking ──
+    // Track video intro engagement
+    const videoIntroTracked = {};
+
+    // Track video start
+    document.addEventListener('play', function(e) {
+      if (e.target && e.target.id === 'videoIntroPlayer') {
+        if (!videoIntroTracked.started) {
+          gtag('event', 'video_start', {
+            'video_title': 'Analizzaste Intro',
+            'video_type': 'intro',
+            'video_duration': e.target.duration || 'unknown'
+          });
+          videoIntroTracked.started = true;
+        }
+      }
+    }, true);
+
+    // Track video completion
+    document.addEventListener('ended', function(e) {
+      if (e.target && e.target.id === 'videoIntroPlayer') {
+        gtag('event', 'video_complete', {
+          'video_title': 'Analizzaste Intro',
+          'video_type': 'intro'
+        });
+      }
+    }, true);
+
+    // Track CTA button clicks (Inizia)
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.cta-primary, [class*="btn-inizia"], .topbar-cta');
+      if (btn && btn.textContent.includes('Inizia')) {
+        gtag('event', 'cta_click', {
+          'button_text': btn.textContent.trim(),
+          'button_type': 'primary_cta'
+        });
+      }
+    });
+
+    // Track section navigation clicks
+    document.addEventListener('click', function(e) {
+      const link = e.target.closest('a');
+      if (link && link.textContent.includes('Come funziona')) {
+        gtag('event', 'section_navigate', {
+          'section_name': 'come_funziona',
+          'from_location': 'topbar'
+        });
+      }
+    });
+
+    // Track scroll depth
+    let maxScroll = 0;
+    window.addEventListener('scroll', function() {
+      const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      if (scrollPercent > maxScroll) {
+        maxScroll = scrollPercent;
+        if ([25, 50, 75, 90].includes(Math.floor(scrollPercent))) {
+          gtag('event', 'scroll_depth', {
+            'percent_scrolled': Math.floor(scrollPercent)
+          });
+        }
+      }
+    }, { passive: true });
+
+    // Track time on page (engagement)
+    let engagementTimeout;
+    const trackEngagement = () => {
+      gtag('event', 'engagement', {
+        'engagement_time_msec': 30000
+      });
+    };
+
+    window.addEventListener('scroll', () => {
+      clearTimeout(engagementTimeout);
+      engagementTimeout = setTimeout(trackEngagement, 30000);
+    }, { passive: true });
+
+    window.addEventListener('mousemove', () => {
+      clearTimeout(engagementTimeout);
+      engagementTimeout = setTimeout(trackEngagement, 30000);
+    }, { passive: true });
+
+    // Track form submissions (if they have upload forms)
+    document.addEventListener('submit', function(e) {
+      const form = e.target;
+      if (form) {
+        gtag('event', 'form_submit', {
+          'form_name': form.name || form.id || 'unknown',
+          'form_class': form.className || ''
+        });
+      }
+    });
+
+    // Track file uploads
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.type === 'file') {
+        gtag('event', 'file_upload', {
+          'file_type': e.target.accept || 'any',
+          'form_name': e.target.form?.name || e.target.form?.id || 'unknown'
+        });
+      }
+    });
+
+    // Track view of different report tabs
+    window.switchTabOriginal = window.switchTab;
+    window.switchTab = function(name, elem) {
+      gtag('event', 'tab_view', {
+        'tab_name': name,
+        'report_section': name
+      });
+      if (window.switchTabOriginal) {
+        window.switchTabOriginal(name, elem);
+      }
+    };
+
+  </script>
   <link rel="icon" href="/img/favicon.svg?v=2" type="image/svg+xml" />
   <link rel="icon" href="/img/favicon-32.png?v=2" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/img/apple-touch-icon.png?v=2" />
