@@ -1,9 +1,9 @@
 # GitHub Secrets Configuration Status
 
-**Status**: ⚠️ Pending - GitHub API Issues
+**Status**: ⏳ Pending - Manual Configuration Required
 
 ## Summary
-The Supabase Keep Alive workflow has been fixed and is ready to run, but requires two GitHub Secrets to be configured.
+The Supabase Keep Alive workflow has been fixed and deployed, but GitHub Secrets must be manually configured on GitHub. A complete setup guide and verification script are now provided.
 
 ## Workflow Status ✅
 - **File**: `.github/workflows/keepalive.yml`
@@ -11,6 +11,7 @@ The Supabase Keep Alive workflow has been fixed and is ready to run, but require
 - **YAML Structure**: ✅ Correct (env block at step level)
 - **Retry Logic**: ✅ Implemented (3 attempts with 5s delay)
 - **Error Handling**: ✅ Implemented (proper exit codes)
+- **Documentation**: ✅ Complete setup guide created
 
 ## Required GitHub Secrets
 
@@ -26,33 +27,50 @@ To make the workflow functional, you need to configure these two secrets in your
 - **Name**: `SUPABASE_SERVICE_ROLE_KEY`
 - **Value**: *[Your Supabase Service Role Key from previous session]*
 
-## Current Issues 🔴
+## Current Status ✅
 
-### GitHub API Restrictions
-- The GitHub Web UI Secrets page is showing loading errors
-- The GitHub CLI tool is blocked by the proxy from accessing the Secrets API
-- GitHub appears to be experiencing temporary API issues for Actions Secrets
+### Solutions Implemented
+- ✅ Workflow file fixed and deployed
+- ✅ Comprehensive setup guide created (`GITHUB_SECRETS_SETUP.md`)
+- ✅ Verification script created (`check-supabase-setup.sh`)
+- ✅ README updated with quick start instructions
+- ✅ Documentation for troubleshooting added
 
-### What This Means
-- The workflow file is ready and deployed
-- The workflow cannot execute until secrets are configured
-- Once GitHub's API is working, the secrets can be added through the web UI at:
-  `https://github.com/hobbyimprenditore/Analizzaste/settings/secrets/actions`
+### What's Needed Now
+The workflow cannot execute until GitHub Secrets are manually configured by the user:
+- **SUPABASE_URL**: `https://hvmnernovucnsksszsbe.supabase.co`
+- **SUPABASE_SERVICE_ROLE_KEY**: (from Supabase Dashboard)
 
 ## Next Steps
 
-1. **Wait for GitHub API Recovery** (if experiencing temporary outage)
-2. **Configure Secrets via Web UI**:
+### For Users
+
+1. **Quick Verification** (optional):
+   ```bash
+   ./check-supabase-setup.sh
+   ```
+   This script checks if everything is set up correctly.
+
+2. **Configure GitHub Secrets** (required):
+   - Read: `GITHUB_SECRETS_SETUP.md` (complete step-by-step guide)
    - Visit: https://github.com/hobbyimprenditore/Analizzaste/settings/secrets/actions
-   - Click "New repository secret"
-   - Add both secrets listed above
+   - Add the 2 secrets as described in the guide
+
 3. **Test the Workflow**:
-   - Go to Actions tab
+   - Go to: https://github.com/hobbyimprenditore/Analizzaste/actions
    - Select "Supabase Keep Alive" workflow
    - Click "Run workflow" to trigger manually
+
 4. **Verify Success**:
    - Check the workflow run output
    - Should show: "✅ Keep alive riuscito! Database attivo."
+
+### Documentation Files
+
+- **GITHUB_SECRETS_SETUP.md** - Complete setup guide (step-by-step)
+- **check-supabase-setup.sh** - Automated verification script
+- **README.md** - Quick start and troubleshooting
+- **SECRETS_SETUP_STATUS.md** - This file (status and history)
 
 ## Workflow Behavior
 
