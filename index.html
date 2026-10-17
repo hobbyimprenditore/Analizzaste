@@ -523,6 +523,11 @@
   </script>
 </head>
 <body>
+<!-- AVVISO MANUTENZIONE: per rimuoverlo a fine lavori, cancellare questo blocco (fino al commento di chiusura) -->
+<div id="avvisoManutenzione" role="status" style="position:sticky;top:0;z-index:10000;background:#f97316;color:#fff;padding:10px 16px;text-align:center;font-size:14px;line-height:1.5"><strong>🛠️ Sito in aggiornamento.</strong> Alcune funzioni, come l'analisi e le consulenze, potrebbero essere temporaneamente non disponibili. Grazie per la pazienza. <button type="button" onclick="chiudiAvvisoManutenzione()" style="margin-left:10px;background:#fff;color:#c2410c;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:600">Chiudi</button></div>
+<script>function chiudiAvvisoManutenzione(){var el=document.getElementById('avvisoManutenzione');if(el)el.remove();}</script>
+<!-- FINE AVVISO MANUTENZIONE -->
+
 
 <!-- VIDEO INTRO OVERLAY -->
 <div class="video-intro-overlay hidden" id="videoIntroOverlay">
