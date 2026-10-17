@@ -524,7 +524,7 @@
 </head>
 <body>
 <!-- AVVISO MANUTENZIONE: per rimuoverlo a fine lavori, cancellare questo blocco (fino al commento di chiusura) -->
-<div id="avvisoManutenzione" role="status" style="position:sticky;top:0;z-index:10000;background:#f97316;color:#fff;padding:10px 16px;text-align:center;font-size:14px;line-height:1.5"><strong>🛠️ Sito in aggiornamento.</strong> Alcune funzioni, come l'analisi e le consulenze, potrebbero essere temporaneamente non disponibili. Grazie per la pazienza. <button type="button" onclick="chiudiAvvisoManutenzione()" style="margin-left:10px;background:#fff;color:#c2410c;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:600">Chiudi</button></div>
+<div id="avvisoManutenzione" role="status" style="display:none;position:sticky;top:0;z-index:10000;background:#f97316;color:#fff;padding:10px 16px;text-align:center;font-size:14px;line-height:1.5"><strong>🛠️ Sito in aggiornamento.</strong> Alcune funzioni, come l'analisi e le consulenze, potrebbero essere temporaneamente non disponibili. Grazie per la pazienza. <button type="button" onclick="chiudiAvvisoManutenzione()" style="margin-left:10px;background:#fff;color:#c2410c;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:600">Chiudi</button></div>
 <script>function chiudiAvvisoManutenzione(){var el=document.getElementById('avvisoManutenzione');if(el)el.remove();}</script>
 <!-- FINE AVVISO MANUTENZIONE -->
 
@@ -772,7 +772,7 @@
 
 <!-- MODALI -->
 <div class="modal-back hidden" id="adminModalBack" onclick="if(event.target===this)closeAdminPanel()">
-  <div class="modal-box" style="max-width:820px"><button class="m-close" onclick="closeAdminPanel()">✕</button><h3>Utenti registrati</h3><p class="m-sub" id="adminCount">Caricamento…</p><div style="max-height:55vh;overflow:auto;margin-bottom:16px" id="adminTableWrap"></div><button class="m-submit" onclick="printAdminReport()">🖨 Stampa / Esporta PDF</button></div>
+  <div class="modal-box" style="max-width:820px"><button class="m-close" onclick="closeAdminPanel()">✕</button><h3>Utenti registrati</h3><p class="m-sub" id="adminCount">Caricamento…</p><div style="margin-bottom:14px;padding:12px;border:1px solid #e5e7eb;border-radius:10px"><strong>Modalità manutenzione</strong><p class="m-sub" id="manutStato" style="margin:6px 0">Caricamento…</p><button class="m-submit" id="btnManutenzione" type="button" onclick="toggleManutenzione()">Attiva manutenzione</button></div><div style="max-height:55vh;overflow:auto;margin-bottom:16px" id="adminTableWrap"></div><button class="m-submit" onclick="printAdminReport()">🖨 Stampa / Esporta PDF</button></div>
 </div>
 <div id="adminPrintArea" class="hidden"></div>
 
@@ -1101,7 +1101,7 @@ function requestAccountDeletion(){if(!currentUser)return;window.location.href='m
 
 // ── ADMIN PANEL ──
 async function openAdminPanel(){
-  if(!isAdmin)return;$('adminModalBack').classList.remove('hidden');$('adminTableWrap').innerHTML='';$('adminCount').textContent='Caricamento…';
+  if(!isAdmin)return;$('adminModalBack').classList.remove('hidden');$('adminTableWrap').innerHTML='';$('adminCount').textContent='Caricamento…';aggiornaPannelloManutenzione();
   const[{data:users,error:uErr},{data:reports}]=await Promise.all([sb.from('profiles').select('id,email,phone,city,created_at,is_blocked').order('created_at',{ascending:false}),sb.from('reports').select('user_id,file_names,created_at').order('created_at',{ascending:false})]);
   if(uErr){$('adminCount').textContent='Errore: '+uErr.message;return;}
   const byUser={};(reports||[]).forEach(r=>{(byUser[r.user_id]=byUser[r.user_id]||[]).push(r);});
@@ -1111,6 +1111,12 @@ async function openAdminPanel(){
   window._adminTableHtml=$('adminTableWrap').innerHTML;window._adminCount=users.length;
 }
 function closeAdminPanel(){$('adminModalBack').classList.add('hidden');}
+// ── MANUTENZIONE (stato condiviso in tabella impostazioni) ──
+let manutenzioneAttiva=false;
+function applicaBannerManutenzione(on){manutenzioneAttiva=!!on;const el=document.getElementById('avvisoManutenzione');if(el)el.style.display=on?'':'none';}
+async function caricaManutenzione(){try{const{data,error}=await sb.from('impostazioni').select('valore').eq('chiave','manutenzione').maybeSingle();if(error)return;applicaBannerManutenzione(!!(data&&data.valore&&data.valore.attiva));}catch(e){}}
+async function aggiornaPannelloManutenzione(){await caricaManutenzione();$('manutStato').textContent=manutenzioneAttiva?'Stato: ATTIVA (il banner è visibile a tutti i visitatori)':'Stato: non attiva';$('btnManutenzione').textContent=manutenzioneAttiva?'Disattiva manutenzione':'Attiva manutenzione';}
+async function toggleManutenzione(){if(!isAdmin)return;const nuovo=!manutenzioneAttiva;$('btnManutenzione').disabled=true;const{error}=await sb.from('impostazioni').upsert({chiave:'manutenzione',valore:{attiva:nuovo},updated_at:new Date().toISOString()});$('btnManutenzione').disabled=false;if(error){$('manutStato').textContent='Errore: '+error.message;return;}applicaBannerManutenzione(nuovo);await aggiornaPannelloManutenzione();}
 function printAdminReport(){if(!window._adminTableHtml)return;$('adminPrintArea').innerHTML=`<h2>Report iscritti</h2>${window._adminTableHtml}`;document.body.classList.add('admin-printing');window.print();const cleanup=()=>{document.body.classList.remove('admin-printing');window.removeEventListener('afterprint',cleanup);};window.addEventListener('afterprint',cleanup);}
 async function handleForgot(e){e.preventDefault();const email=$('forgotEmail').value.trim();$('forgotBtn').disabled=true;const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});$('forgotBtn').disabled=false;if(error){showAuthMsg(error.message,'err');return false;}$('viewForgot').classList.add('hidden');$('viewForgotSent').classList.remove('hidden');clearAuthMsg();return false;}
 async function handleReset(e){e.preventDefault();const newPassword=$('resetPassword').value;$('resetBtn').disabled=true;const{error:updErr}=await sb.auth.updateUser({password:newPassword});$('resetBtn').disabled=false;if(updErr){showAuthMsg(updErr.message,'err');return false;}showAuthMsg('Password aggiornata!','ok');setTimeout(closeAuthModal,1200);return false;}
@@ -1429,6 +1435,7 @@ if(document.readyState==='loading'){
 }else{
   initVideoIntro();
 }
+caricaManutenzione();
 </script>
 <div class="ck-banner hidden" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
   <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina. Dettagli nella <a href="/privacy.html" target="_blank" rel="noopener">Cookie Policy</a>.</p>
