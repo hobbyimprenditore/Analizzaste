@@ -1228,7 +1228,7 @@ function inviaRichiestaConsulenza(){
   const email=($('consEmail')||{}).value.trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err('Inserisci un indirizzo email valido.');
   if(!$('consConsenso').checked) return err('Serve il tuo consenso per inviare il report al professionista.');
-  msg.innerHTML='<div class="cons-note">Richiesta pronta per l\'invio. L\'invio al professionista non è ancora collegato: lo attiveremo dopo la configurazione del servizio.</div>';
+  msg.innerHTML='<div class="cons-note">Il servizio di richiesta consulenza sarà disponibile a breve.</div>';
 }
 function render(d){renderVerdict(d);$('tp-panoramica').innerHTML=buildPano(d);$('tp-legale').innerHTML=buildLegal(d);$('tp-economica').innerHTML=buildEco(d);$('tp-rischi').innerHTML=buildRisk(d);$('tp-tabella').innerHTML=buildTbl(d);$('tp-quotazione').innerHTML='';if(S.quotazione)renderQuotazione(S.quotazione);$('tp-consulenza').innerHTML=buildConsulenza();switchTab('panoramica',document.querySelector('.tab'));}
 function renderVerdict(d){const g=d.giudizio||{};const risk=g.livello_rischio||'MEDIO';const cls={BASSO:'low',MEDIO:'mid',ALTO:'high'}[risk]||'mid';const ico2={BASSO:'✅',MEDIO:'⚠️',ALTO:'🔴'}[risk]||'⚠️';const el=$('verdictEl');el.className='verdict '+cls;el.innerHTML=`<div class="v-ico">${ico2}</div><div><div class="v-ey">Giudizio finale</div><div class="v-title">Rischio ${risk} — Convenienza ${g.convenienza||'N/D'}</div><div class="v-desc">${esc(g.sintesi||'Analisi completata.')}</div></div>`;el.classList.remove('hidden');}
