@@ -350,6 +350,18 @@
     .ft-social-mini{display:flex;justify-content:center;gap:16px;margin:14px 0}
     .ft-social-mini a{display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(255,255,255,.08);border-radius:8px;color:rgba(255,255,255,.6);transition:all .15s;text-decoration:none}
     .ft-social-mini a:hover{background:rgba(255,255,255,.15);color:white;transform:translateY(-2px)}
+    .cons-box{background:var(--surface,#fff);border:1px solid #e5e7eb;border-radius:14px;padding:22px}
+    .cons-box h3{font-size:18px;font-weight:700;margin:0 0 6px}
+    .cons-note{background:#f3f6fb;border-radius:10px;padding:12px 14px;font-size:13px;color:#374151;line-height:1.6;margin:14px 0}
+    .cons-step{font-size:13px;color:#6b7280;margin:16px 0 8px}
+    .cons-tipi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+    .cons-tipo{display:flex;gap:10px;align-items:flex-start;border:1px solid #e5e7eb;border-radius:10px;padding:12px;cursor:pointer}
+    .cons-tipo span{display:flex;flex-direction:column;gap:2px}
+    .cons-tipo small{color:#6b7280;font-size:12px}
+    .cons-check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#374151;margin:8px 0;line-height:1.5}
+    .cons-zona{margin-top:8px}
+    .cons-zona small{display:block;color:#6b7280;font-size:12px;margin-top:6px}
+    .cons-err{color:#b91c1c;font-size:13px;margin:10px 0}
     @media(max-width:600px){.review-box{flex-direction:column;gap:12px}.social-card{padding:14px 16px}.sc-handle{font-size:15px}}
 
     /* Crediti bassi */
@@ -706,6 +718,7 @@
         <button class="tab" onclick="switchTab('rischi',this)">🔍 Rischi</button>
         <button class="tab" onclick="switchTab('tabella',this)">📋 Tutti i dati</button>
         <button class="tab" onclick="switchTab('quotazione',this)">📊 Quotazione</button>
+        <button class="tab" onclick="switchTab('consulenza',this)">💬 Consulenza</button>
       </div>
       <div class="tab-pane active" id="tp-panoramica"></div>
       <div class="tab-pane" id="tp-legale"></div>
@@ -713,6 +726,7 @@
       <div class="tab-pane" id="tp-rischi"></div>
       <div class="tab-pane" id="tp-tabella"></div>
       <div class="tab-pane" id="tp-quotazione"></div>
+      <div class="tab-pane" id="tp-consulenza"></div>
       <div class="res-foot"><button class="btn-new" onclick="clearAll()">+ Analizza un altro documento</button></div>
     </div>
   </div>
@@ -1181,7 +1195,42 @@ async function loadQuotazione(){const d=S.unified;if(!d)return;if(S.quotazione){
 function renderQuotazione(q){const c=q.comparabili||[];const rows=c.map(x=>`<tr><td class="dt-key">${esc(x.descrizione||'N/D')}</td><td class="${x.mq?'dt-val':'dt-nd'}">${x.mq?esc(String(x.mq)):'N/D'}</td><td class="${x.prezzo?'dt-val':'dt-nd'}">${x.prezzo?esc(String(x.prezzo)):'N/D'}</td><td class="${x.prezzo_mq?'dt-val':'dt-nd'}">${x.prezzo_mq?esc(String(x.prezzo_mq)):'N/D'}</td></tr>`).join('');$('tp-quotazione').innerHTML=`<div class="prose"><h3>📍 Zona di riferimento</h3>${icard('Zona',q.zona,false,false,true)}<h3>🏛️ Valori OMI (base ufficiale, atti registrati)</h3><div class="icard icard-grid">${icard('Usato min €/m²',q.omi?.usato_min_mq)}${icard('Usato max €/m²',q.omi?.usato_max_mq)}${icard('Fonte',q.omi?.fonte,false,false,true)}</div><h3>🏷️ Prezzi richiesti in zona (annunci attuali)</h3><div class="icard icard-grid">${icard('Usato €/m²',q.richiesto?.usato_mq)}${icard('Ristrutturato €/m²',q.richiesto?.ristrutturato_mq)}${icard('Nuovo €/m²',q.richiesto?.nuovo_mq)}</div>${c.length?'<h3>🏘️ Comparabili trovati</h3><div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Descrizione</th><th>m²</th><th>Prezzo</th><th>€/m²</th></tr></thead><tbody>'+rows+'</tbody></table></div>':''}<h3>⚖️ Confronto con stima/prezzo base</h3>${al('info','🔍',q.confronto_con_stima||'N/D')}<h3>📝 Sintesi</h3>${al('info','📌',q.sintesi||'N/D')}<div class="qz-actions" style="margin-top:18px"><button class="btn-exp" onclick="S.quotazione=null;loadQuotazione()">🔄 Aggiorna quotazione</button></div></div>`;}
 
 // ── RENDER ──
-function render(d){renderVerdict(d);$('tp-panoramica').innerHTML=buildPano(d);$('tp-legale').innerHTML=buildLegal(d);$('tp-economica').innerHTML=buildEco(d);$('tp-rischi').innerHTML=buildRisk(d);$('tp-tabella').innerHTML=buildTbl(d);$('tp-quotazione').innerHTML='';if(S.quotazione)renderQuotazione(S.quotazione);switchTab('panoramica',document.querySelector('.tab'));}
+const CONSULENZA_EMAIL='analizzaste@gmail.com';
+const CONSULENZA_TIPI=[{id:'legale',nome:'Legale',desc:'Avvocato',zona:false},{id:'tecnica',nome:'Tecnica',desc:'Geometra o ingegnere',zona:false},{id:'quotazione',nome:'Quotazione',desc:'Agente immobiliare di zona',zona:true},{id:'investitore',nome:'Investitore',desc:"Parere sull'investimento",zona:false},{id:'amministratore',nome:'Amministratore di condominio',desc:'Parere su spese e delibere',zona:true}];
+const REGIONI_IT=['Abruzzo','Basilicata','Calabria','Campania','Emilia-Romagna','Friuli-Venezia Giulia','Lazio','Liguria','Lombardia','Marche','Molise','Piemonte','Puglia','Sardegna','Sicilia','Toscana','Trentino-Alto Adige','Umbria','Valle d\'Aosta','Veneto'];
+function buildConsulenza(){
+  const tipi=CONSULENZA_TIPI.map(t=>`<label class="cons-tipo"><input type="radio" name="cons_tipo" value="${t.id}" data-zona="${t.zona}" onchange="aggiornaZonaConsulenza()"><span><strong>${esc(t.nome)}</strong><small>${esc(t.desc)}</small></span></label>`).join('');
+  return `<div class="cons-box"><h3>Vuoi una prima opinione?</h3><p class="m-sub">Scegli il tipo di consulente. Dopo la scelta vedrai i professionisti disponibili in quella sezione.</p>
+  <div class="cons-note"><strong>Per la prima consulenza non serve un professionista della zona.</strong> Va bene qualsiasi professionista della sezione. Se poi vuoi andare avanti, è consigliabile sceglierne uno della tua zona.</div>
+  <div class="cons-step">1. Tipo di opinione</div><div class="cons-tipi">${tipi}</div>
+  <div class="cons-step">2. Zona</div><div id="consZonaWrap"><small>Scegli prima il tipo di consulenza</small></div>
+  <div class="cons-step">3. La tua email</div><input type="email" id="consEmail" placeholder="La tua email" aria-label="La tua email" style="width:100%">
+  <div class="cons-note"><strong>Pagamento fuori dalla piattaforma.</strong> Per ora la piattaforma non gestisce pagamenti. Il professionista ti comunicherà il prezzo richiesto e il metodo di pagamento, e seguirà lui il pagamento. La piattaforma registra solo il prezzo indicato.</div>
+  <label class="cons-check"><input type="checkbox" id="consConsenso"> Acconsento a inviare il mio report al professionista scelto, per ricevere la stima del costo.</label>
+  <div id="consMsg"></div>
+  <button class="m-submit" onclick="inviaRichiestaConsulenza()">Richiedi la stima del costo</button></div>`;
+}
+function consulenzaTipoScelto(){const r=document.querySelector('input[name="cons_tipo"]:checked');return r?CONSULENZA_TIPI.find(t=>t.id===r.value):null;}
+function zonaFieldsHtml(){return `<div class="cons-zona"><input type="text" id="consProvincia" placeholder="Città o provincia" aria-label="Città o provincia" style="width:100%"><select id="consRegione" aria-label="Regione" style="width:100%;margin-top:8px"><option value="">Regione</option>${REGIONI_IT.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>`;}
+function aggiornaZonaConsulenza(){
+  const t=consulenzaTipoScelto(); const w=$('consZonaWrap'); if(!t){w.innerHTML='<small>Scegli prima il tipo di consulenza</small>';return;}
+  if(t.zona){w.innerHTML=zonaFieldsHtml()+'<small style="display:block;color:#6b7280;font-size:12px;margin-top:6px">Obbligatoria per questa consulenza</small>';return;}
+  w.innerHTML='<label class="cons-check"><input type="checkbox" id="consZonaChk" onchange="mostraZonaOpzionale(this.checked)"> Voglio un professionista della mia zona</label><div id="consZonaFields"></div>';
+}
+function mostraZonaOpzionale(on){const f=$('consZonaFields'); if(f) f.innerHTML=on?zonaFieldsHtml():'';}
+function inviaRichiestaConsulenza(){
+  const msg=$('consMsg'); const err=m=>{msg.innerHTML=`<div class="cons-err">${esc(m)}</div>`;};
+  const t=consulenzaTipoScelto();
+  if(!t) return err('Scegli il tipo di consulenza.');
+  const prov=($('consProvincia')||{}).value||''; const reg=($('consRegione')||{}).value||'';
+  const zonaAttiva=t.zona||!!($('consZonaChk')||{}).checked;
+  if(zonaAttiva && (!prov.trim()||!reg)) return err('Inserisci città o provincia e regione.');
+  const email=($('consEmail')||{}).value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err('Inserisci un indirizzo email valido.');
+  if(!$('consConsenso').checked) return err('Serve il tuo consenso per inviare il report al professionista.');
+  msg.innerHTML='<div class="cons-note">Richiesta pronta per l\'invio. L\'invio al professionista non è ancora collegato: lo attiveremo dopo la configurazione del servizio.</div>';
+}
+function render(d){renderVerdict(d);$('tp-panoramica').innerHTML=buildPano(d);$('tp-legale').innerHTML=buildLegal(d);$('tp-economica').innerHTML=buildEco(d);$('tp-rischi').innerHTML=buildRisk(d);$('tp-tabella').innerHTML=buildTbl(d);$('tp-quotazione').innerHTML='';if(S.quotazione)renderQuotazione(S.quotazione);$('tp-consulenza').innerHTML=buildConsulenza();switchTab('panoramica',document.querySelector('.tab'));}
 function renderVerdict(d){const g=d.giudizio||{};const risk=g.livello_rischio||'MEDIO';const cls={BASSO:'low',MEDIO:'mid',ALTO:'high'}[risk]||'mid';const ico2={BASSO:'✅',MEDIO:'⚠️',ALTO:'🔴'}[risk]||'⚠️';const el=$('verdictEl');el.className='verdict '+cls;el.innerHTML=`<div class="v-ico">${ico2}</div><div><div class="v-ey">Giudizio finale</div><div class="v-title">Rischio ${risk} — Convenienza ${g.convenienza||'N/D'}</div><div class="v-desc">${esc(g.sintesi||'Analisi completata.')}</div></div>`;el.classList.remove('hidden');}
 function icard(label,val,big,gn,full){const cls=val?(big?'if-val big':gn?'if-val gn':'if-val'):'if-val nd';return`<div class="info-field${full?' if-full':''}"><div class="if-lbl">${esc(label)}</div><div class="${cls}">${val?esc(String(val)):'N/D'}</div></div>`;}
 function fmtSpese(v){if(!v)return'';if(typeof v==='string')return v;if(Array.isArray(v))return v.map(fmtSpese).filter(Boolean).join(' · ');if(typeof v==='object')return Object.entries(v).filter(([,x])=>x!=null&&x!=='').map(([k,x])=>k.replace(/_/g,' ')+': '+(typeof x==='object'?fmtSpese(x):x)).join(' · ');return String(v);}
