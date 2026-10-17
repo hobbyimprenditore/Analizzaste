@@ -54,7 +54,7 @@ async function eAdmin(userId, env) {
   return !!(d && d[0] && d[0].is_admin);
 }
 
-async function inviaEmail(env, { to, subject, text, replyTo, attachments }) {
+async function inviaEmail(env, { to, subject, text, replyTo = undefined, attachments = undefined }) {
   const body = { from: `Analizzaste <${env.FROM_EMAIL}>`, to: [to], subject, text };
   if (replyTo) body.reply_to = replyTo;
   if (attachments) body.attachments = attachments;
