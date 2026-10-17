@@ -1261,6 +1261,8 @@ function esc(s){if(!s)return'';return String(s).replace(/<br\s*\/?>/gi,' ').repl
 function initVideoIntro(){
   try{
     const videoSkipped=localStorage.getItem('video_intro_skipped');
+    const oggi=new Date().toLocaleDateString('sv-SE');
+    const giaVisto=localStorage.getItem('video_intro_day')===oggi;
     const overlay=$('videoIntroOverlay');
     const player=$('videoIntroPlayer');
     const errorMsg=$('videoErrorMsg');
@@ -1280,11 +1282,17 @@ function initVideoIntro(){
       player.load(); // Ricarica il video con la nuova sorgente
     }
 
-    // Se utente ha scelto di saltare in futuro, nascondi subito l'overlay
+    // Se l'utente ha scelto "Non mostrare più", non lo mostriamo più
     if(videoSkipped==='true'){
       overlay.classList.add('hidden');
       return;
     }
+    // Al massimo una volta al giorno: se già mostrato oggi, non lo ripetiamo
+    if(giaVisto){
+      overlay.classList.add('hidden');
+      return;
+    }
+    localStorage.setItem('video_intro_day',oggi);
 
     // Altrimenti mostra il video
     overlay.classList.remove('hidden');
@@ -1362,10 +1370,7 @@ function handleVideoSkip(){
     const checkbox=$('videoSkipNext');
     const player=$('videoIntroPlayer');
 
-    // Se checkbox è spuntato, ricorda la scelta
-    if(checkbox && checkbox.checked){
-      localStorage.setItem('video_intro_skipped','true');
-    }
+    salvaSceltaVideo();
 
     // Ferma il video
     if(player){player.pause();}
@@ -1383,8 +1388,18 @@ function handleVideoSkip(){
   }
 }
 
+function salvaSceltaVideo(){
+  try{
+    const checkbox=$('videoSkipNext');
+    if(checkbox && checkbox.checked){
+      localStorage.setItem('video_intro_skipped','true');
+    }
+  }catch(e){}
+}
+
 function handleVideoEnd(){
   try{
+    salvaSceltaVideo();
     const overlay=$('videoIntroOverlay');
     if(overlay){
       overlay.classList.add('fade-out');
