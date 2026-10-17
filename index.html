@@ -772,7 +772,19 @@
 
 <!-- MODALI -->
 <div class="modal-back hidden" id="adminModalBack" onclick="if(event.target===this)closeAdminPanel()">
-  <div class="modal-box" style="max-width:820px"><button class="m-close" onclick="closeAdminPanel()">✕</button><h3>Utenti registrati</h3><p class="m-sub" id="adminCount">Caricamento…</p><div style="margin-bottom:14px;padding:12px;border:1px solid #e5e7eb;border-radius:10px"><strong>Modalità manutenzione</strong><p class="m-sub" id="manutStato" style="margin:6px 0">Caricamento…</p><button class="m-submit" id="btnManutenzione" type="button" onclick="toggleManutenzione()">Attiva manutenzione</button><details style="margin-top:12px"><summary style="cursor:pointer;font-size:13px">Registro attivazioni</summary><div id="manutLog" style="font-size:13px;max-height:180px;overflow:auto;margin-top:8px">—</div></details></div><div style="max-height:55vh;overflow:auto;margin-bottom:16px" id="adminTableWrap"></div><button class="m-submit" onclick="printAdminReport()">🖨 Stampa / Esporta PDF</button></div>
+  <div class="modal-box" style="max-width:1000px;padding:20px 22px">
+    <button class="m-close" onclick="closeAdminPanel()">✕</button>
+    <h3 style="margin-bottom:2px">Pannello admin</h3>
+    <p class="m-sub" id="adminCount" style="margin:0 0 10px">Caricamento…</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px">
+      <strong style="font-size:14px">Manutenzione:</strong>
+      <span id="manutStato" style="font-size:13px;flex:1;min-width:200px">Caricamento…</span>
+      <button class="m-submit" id="btnManutenzione" type="button" onclick="toggleManutenzione()" style="width:auto;padding:8px 14px;margin:0">Attiva manutenzione</button>
+    </div>
+    <details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:13px">Registro attivazioni</summary><div id="manutLog" style="font-size:12px;max-height:110px;overflow:auto;margin-top:6px">—</div></details>
+    <div id="adminTableWrap"></div>
+    <button class="m-submit" type="button" onclick="printAdminReport()" style="margin-top:12px;padding:10px">🖨 Stampa / Esporta PDF</button>
+  </div>
 </div>
 <div id="adminPrintArea" class="hidden"></div>
 
@@ -1101,15 +1113,27 @@ function requestAccountDeletion(){if(!currentUser)return;window.location.href='m
 
 // ── ADMIN PANEL ──
 async function openAdminPanel(){
-  if(!isAdmin)return;$('adminModalBack').classList.remove('hidden');$('adminTableWrap').innerHTML='';$('adminCount').textContent='Caricamento…';aggiornaPannelloManutenzione();
+  if(!isAdmin)return;
+  $('adminModalBack').classList.remove('hidden');$('adminTableWrap').innerHTML='';$('adminCount').textContent='Caricamento…';
+  aggiornaPannelloManutenzione();
   const[{data:users,error:uErr},{data:reports}]=await Promise.all([sb.from('profiles').select('id,email,phone,city,created_at,is_blocked').order('created_at',{ascending:false}),sb.from('reports').select('user_id,file_names,created_at').order('created_at',{ascending:false})]);
   if(uErr){$('adminCount').textContent='Errore: '+uErr.message;return;}
   const byUser={};(reports||[]).forEach(r=>{(byUser[r.user_id]=byUser[r.user_id]||[]).push(r);});
   $('adminCount').textContent=users.length+' utenti — '+(reports?reports.length:0)+' report';
-  const rows=users.map(u=>{const rl=byUser[u.id]||[];const repList=rl.length?rl.map(r=>esc(r.file_names||'—')+' <span style="color:var(--ink-xs)">('+new Date(r.created_at).toLocaleDateString('it-IT')+')</span>').join('<br>'):'<span style="color:var(--ink-xs)">Nessun report</span>';return `<tr><td style="font-size:11px;font-family:monospace;word-break:break-all">${esc(u.id)}</td><td>${esc(u.email||'')}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td><td>${new Date(u.created_at).toLocaleDateString('it-IT')}</td><td>${u.is_blocked?'Sospeso':'Attivo'}</td><td>${repList}</td></tr>`;}).join('');
-  $('adminTableWrap').innerHTML=`<table><thead><tr><th>ID Utente</th><th>Email</th><th>Cellulare</th><th>Città</th><th>Registrato il</th><th>Stato</th><th>Report</th></tr></thead><tbody>${rows}</tbody></table>`;
-  window._adminTableHtml=$('adminTableWrap').innerHTML;window._adminCount=users.length;
+  window._adminUsers=users.map(u=>({...u,reps:byUser[u.id]||[]}));
+  renderAdminTable();
 }
+function renderAdminTable(){
+  const rows=window._adminUsers.map((u,i)=>{
+    const dt=new Date(u.created_at).toLocaleDateString('it-IT');
+    return `<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;word-break:break-all">${esc(u.email||'')}</td><td style="padding:6px 8px">${esc(u.city||'—')}</td><td style="padding:6px 8px;white-space:nowrap">${dt}</td><td style="padding:6px 8px">${u.is_blocked?'Sospeso':'Attivo'}</td><td style="padding:6px 8px;text-align:center">${u.reps.length}</td><td style="padding:6px 8px;text-align:center"><button type="button" onclick="toggleDettaglio(${i})" title="Dettagli" style="background:none;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;padding:2px 9px;font-size:14px">⋯</button></td></tr><tr id="det-${i}" class="hidden"><td colspan="6" style="padding:8px 12px;background:#f8fafc;font-size:12px">${dettaglioHtml(u)}</td></tr>`;
+  }).join('');
+  $('adminTableWrap').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb"><th style="padding:6px 8px">Email</th><th style="padding:6px 8px">Città</th><th style="padding:6px 8px">Registrato</th><th style="padding:6px 8px">Stato</th><th style="padding:6px 8px;text-align:center">Report</th><th style="padding:6px 8px;text-align:center">Dettagli</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const pr=window._adminUsers.map(u=>`<tr><td>${esc(u.id)}</td><td>${esc(u.email||'')}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td><td>${new Date(u.created_at).toLocaleDateString('it-IT')}</td><td>${u.is_blocked?'Sospeso':'Attivo'}</td><td>${u.reps.map(r=>esc(r.file_names||'—')).join('<br>')||'Nessun report'}</td></tr>`).join('');
+  window._adminTableHtml=`<table><thead><tr><th>ID Utente</th><th>Email</th><th>Cellulare</th><th>Città</th><th>Registrato il</th><th>Stato</th><th>Report</th></tr></thead><tbody>${pr}</tbody></table>`;
+}
+function dettaglioHtml(u){const rep=u.reps.length?u.reps.map(r=>`${esc(r.file_names||'—')} <span style="color:#6b7280">(${new Date(r.created_at).toLocaleDateString('it-IT')})</span>`).join('<br>'):'Nessun report';return `<div><strong>ID:</strong> <span style="font-family:monospace">${esc(u.id)}</span> &nbsp; <strong>Cellulare:</strong> ${esc(u.phone||'—')}</div><div style="margin-top:6px"><strong>Report:</strong><br>${rep}</div>`;}
+function toggleDettaglio(i){const r=document.getElementById('det-'+i);if(r)r.classList.toggle('hidden');}
 function closeAdminPanel(){$('adminModalBack').classList.add('hidden');}
 // ── MANUTENZIONE (stato condiviso in tabella impostazioni) ──
 let manutenzioneAttiva=false;
