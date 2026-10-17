@@ -1292,7 +1292,6 @@ function initVideoIntro(){
       overlay.classList.add('hidden');
       return;
     }
-    localStorage.setItem('video_intro_day',oggi);
 
     // Altrimenti mostra il video
     overlay.classList.remove('hidden');
@@ -1366,6 +1365,7 @@ function initVideoIntro(){
 
 function handleVideoSkip(){
   try{
+    segnaVideoVisto();
     const overlay=$('videoIntroOverlay');
     const checkbox=$('videoSkipNext');
     const player=$('videoIntroPlayer');
@@ -1388,6 +1388,12 @@ function handleVideoSkip(){
   }
 }
 
+function segnaVideoVisto(){
+  try{
+    localStorage.setItem('video_intro_day',new Date().toLocaleDateString('sv-SE'));
+  }catch(e){}
+}
+
 function salvaSceltaVideo(){
   try{
     const checkbox=$('videoSkipNext');
@@ -1400,6 +1406,7 @@ function salvaSceltaVideo(){
 function handleVideoEnd(){
   try{
     salvaSceltaVideo();
+    segnaVideoVisto();
     const overlay=$('videoIntroOverlay');
     if(overlay){
       overlay.classList.add('fade-out');
