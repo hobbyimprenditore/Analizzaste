@@ -9,7 +9,7 @@ const SUPABASE_URL = 'https://hvmnernovucnsksszsbe.supabase.co';
 
 // Modello forzato lato server: il client NON può scegliere quale modello usare.
 const MODEL = 'claude-haiku-4-5-20251001';
-const MAX_TOKENS_CAP = 4096;
+const MAX_TOKENS_CAP = 8192;
 const MAX_BODY_BYTES = 20 * 1024 * 1024; // 20 MB (PDF in base64 compresi)
 const TIPI_GRATUITI = ['unione', 'quotazione'];
 const WEB_SEARCH_TOOL = { type: 'web_search_20250305', name: 'web_search', max_uses: 3 };
