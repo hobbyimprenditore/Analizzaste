@@ -27,7 +27,7 @@ async function improntaDocumento(bodyJson) {
   if (typeof m === 'string') {
     doc = m.replace(/^Analizza il seguente avviso \(file: [\s\S]*?\):\n\n/, '');
   } else if (Array.isArray(m)) {
-    doc = m.map(b => b.type === 'image' ? b.source.data : (b.text || '').replace(/^Analizza questo avviso \(file: [\s\S]*?\)\./, '')).join('|');
+    doc = m.map(b => (b.type === 'image' || b.type === 'document') ? b.source.data : (b.text || '').replace(/^Analizza questo avviso \(file: [\s\S]*?\)\./, '')).join('|');
   } else {
     return null;
   }
