@@ -14,6 +14,27 @@ const MAX_BODY_BYTES = 20 * 1024 * 1024; // 20 MB (PDF in base64 compresi)
 const TIPI_GRATUITI = ['unione', 'quotazione'];
 const WEB_SEARCH_TOOL = { type: 'web_search_20250305', name: 'web_search', max_uses: 3 };
 const PAYPAL_RECEIVER = 'hobbyimprenditore@gmail.com';
+// Impronta del documento (solo misurazione, nessun riuso per ora).
+// Il nome del file viene tolto: lo stesso documento caricato con un nome diverso ha la stessa impronta.
+const PROMPT_VERSION = 'v1';
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function improntaDocumento(bodyJson) {
+  const m = bodyJson.messages[0] && bodyJson.messages[0].content;
+  let doc;
+  if (typeof m === 'string') {
+    doc = m.replace(/^Analizza il seguente avviso \(file: [\s\S]*?\):\n\n/, '');
+  } else if (Array.isArray(m)) {
+    doc = m.map(b => b.type === 'image' ? b.source.data : (b.text || '').replace(/^Analizza questo avviso \(file: [\s\S]*?\)\./, '')).join('|');
+  } else {
+    return null;
+  }
+  doc = doc.replace(/\s+/g, ' ').trim().toLowerCase();
+  return sha256Hex(JSON.stringify({ d: doc, m: MODEL, p: PROMPT_VERSION, s: bodyJson.system || '' }));
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const corsHeaders = {
@@ -163,6 +184,8 @@ async function handleClaude(request, env) {
     anthropicBody.tools = [WEB_SEARCH_TOOL]; // definito dal server, non dal client
   }
 
+  const fingerprint = tipo === 'file' ? await improntaDocumento(bodyJson).catch(() => null) : null;
+
   // 3) Amministratore? -> nessun controllo sui crediti
   const profResp = await fetch(
     `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=is_admin,is_blocked`,
@@ -206,6 +229,17 @@ async function handleClaude(request, env) {
     try { await rpc(env, 'rimborsa_credito', { p_user: userId, p_gratuita: gratuita }); } catch {}
   }
   if (!response) return jsonError('Servizio di analisi non raggiungibile, riprova.', 502);
+
+  // Registra l'impronta (solo misurazione: la risposta non cambia)
+  if (fingerprint && response.ok && !isAdmin) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/impronte_analisi`, {
+        method: 'POST',
+        headers: sbHeaders(env, { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ hash: fingerprint, modello: MODEL, prompt_versione: PROMPT_VERSION })
+      });
+    } catch {}
+  }
 
   return new Response(responseBody, {
     status: response.status,
