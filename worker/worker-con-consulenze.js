@@ -9,7 +9,7 @@ const SUPABASE_URL = 'https://hvmnernovucnsksszsbe.supabase.co';
 
 // Modello forzato lato server: il client NON può scegliere quale modello usare.
 const MODEL = 'claude-haiku-4-5-20251001';
-const MAX_TOKENS_CAP = 3000;
+const MAX_TOKENS_CAP = 4096;
 const MAX_BODY_BYTES = 20 * 1024 * 1024; // 20 MB (PDF in base64 compresi)
 const TIPI_GRATUITI = ['unione', 'quotazione'];
 const WEB_SEARCH_TOOL = { type: 'web_search_20250305', name: 'web_search', max_uses: 3 };
@@ -229,6 +229,15 @@ async function handleClaude(request, env) {
     try { await rpc(env, 'rimborsa_credito', { p_user: userId, p_gratuita: gratuita }); } catch {}
   }
   if (!response) return jsonError('Servizio di analisi non raggiungibile, riprova.', 502);
+
+  // Diagnostica (solo log, nessun contenuto): motivo di stop e se la risposta inizia con un JSON
+  if (tipo === 'file' && response.ok) {
+    try {
+      const env = JSON.parse(responseBody);
+      const testo = (env.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+      console.log('[analisi]', JSON.stringify({ stop: env.stop_reason, token_output: env.usage && env.usage.output_tokens, json: testo.trimStart().startsWith('{') }));
+    } catch {}
+  }
 
   // Registra l'impronta (solo misurazione: la risposta non cambia)
   if (fingerprint && response.ok && !isAdmin) {
