@@ -310,11 +310,15 @@
     .btn-new:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-pale)}
 
     /* FAQ */
-    .faq-sec{background:white;border-top:1px solid var(--border);padding:44px 0}
-    .faq-sec .sec-title{margin-bottom:20px}
-    .faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+    .faq-sec{background:white;border-top:1px solid var(--border);padding:32px 0}
+    .faq-wrap{display:grid;grid-template-columns:1fr 290px;gap:32px;align-items:start}
+    .faq-tit{font-size:clamp(22px,3vw,28px);font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+    .faq-grid{display:grid;grid-template-columns:1fr;gap:6px}
+    .faq-contatto{background:linear-gradient(135deg,#0f1117 0%,#1a1f2e 100%);border-top:3px solid #f97316;border-radius:var(--r);padding:20px;color:white;margin-top:22px}
+    .faq-contatto h3{font-size:19px;font-weight:800;line-height:1.25;margin-bottom:8px;letter-spacing:-.01em}
+    .faq-contatto p{font-size:14px;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:14px}
     .faq-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm)}
-    .faq-q{font-size:14px;font-weight:700;padding:12px 40px 12px 16px;cursor:pointer;list-style:none;position:relative}
+    .faq-q{font-size:14px;font-weight:700;padding:10px 40px 10px 16px;cursor:pointer;list-style:none;position:relative}
     .faq-q::-webkit-details-marker{display:none}
     .faq-q::after{content:"+";position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:600;color:var(--blue)}
     .faq-item[open] .faq-q::after{content:"–"}
@@ -431,7 +435,8 @@
       .api-box{flex-direction:column}
       .api-row{flex-direction:column}
       .icard-grid{grid-template-columns:1fr}
-      .faq-grid{grid-template-columns:1fr}
+      .faq-wrap{grid-template-columns:1fr;gap:20px}
+      .faq-contatto{margin-top:0}
       .topbar-links a:not(.topbar-cta){display:none}
       .res-top{flex-direction:column;align-items:flex-start}
     }
@@ -784,14 +789,14 @@
 </section>
 
 <!-- FAQ + SOCIAL + FOOTER (identici) -->
-<section class="faq-sec"><div class="container"><div class="eyebrow">Domande frequenti</div><h2 class="sec-title">Hai dei dubbi?</h2><div class="faq-grid"><details class="faq-item"><summary class="faq-q">È sicuro usare questo strumento?</summary><div class="faq-a">Sì. I tuoi documenti passano da un server proxy sicuro e vengono analizzati dall'intelligenza artificiale di Anthropic (Claude). I file non vengono conservati: resta solo il report, nel tuo storico, e puoi eliminarlo quando vuoi. Dettagli nei <a href="/termini.html" target="_blank">Termini e Condizioni</a>.</div></details><details class="faq-item"><summary class="faq-q">Che formati di file posso caricare?</summary><div class="faq-a">PDF, Word, testo e immagini. Puoi caricare più file insieme.</div></details><details class="faq-item"><summary class="faq-q">L'analisi sostituisce un avvocato?</summary><div class="faq-a">No. È uno strumento di supporto. Per decisioni importanti, consulta un avvocato.</div></details><details class="faq-item"><summary class="faq-q">Se carico più file cosa succede?</summary><div class="faq-a">Il sistema li analizza tutti e li unisce in un unico report.</div></details><details class="faq-item"><summary class="faq-q">I gettoni ottenuti con le donazioni sono rimborsabili?</summary><div class="faq-a"><strong>No, i gettoni non sono rimborsabili.</strong> Le donazioni sono definitive. Sia i gettoni utilizzati che quelli rimasti nel tuo account non potranno essere convertiti in denaro o ricevere rimborso, in accordo con i <a href="/termini.html" target="_blank">Termini e Condizioni</a>. Prima di completare il pagamento, ti verrà mostrato un avviso esplicito di questa condizione.</div></details></div></div></section>
+<section class="faq-sec" id="contattaci"><div class="container faq-wrap"><div class="faq-col"><div class="eyebrow">Domande frequenti</div><h2 class="faq-tit">Hai dei dubbi?</h2><div class="faq-grid"><details class="faq-item"><summary class="faq-q">È sicuro usare questo strumento?</summary><div class="faq-a">Sì. I tuoi documenti passano da un server proxy sicuro e vengono analizzati dall'intelligenza artificiale di Anthropic (Claude). I file non vengono conservati: resta solo il report, nel tuo storico, e puoi eliminarlo quando vuoi. Dettagli nei <a href="/termini.html" target="_blank">Termini e Condizioni</a>.</div></details><details class="faq-item"><summary class="faq-q">Che formati di file posso caricare?</summary><div class="faq-a">PDF, Word, testo e immagini. Puoi caricare più file insieme.</div></details><details class="faq-item"><summary class="faq-q">L'analisi sostituisce un avvocato?</summary><div class="faq-a">No. È uno strumento di supporto. Per decisioni importanti, consulta un avvocato.</div></details><details class="faq-item"><summary class="faq-q">Se carico più file cosa succede?</summary><div class="faq-a">Il sistema li analizza tutti e li unisce in un unico report.</div></details><details class="faq-item"><summary class="faq-q">I gettoni ottenuti con le donazioni sono rimborsabili?</summary><div class="faq-a"><strong>No, i gettoni non sono rimborsabili.</strong> Le donazioni sono definitive. Sia i gettoni utilizzati che quelli rimasti nel tuo account non potranno essere convertiti in denaro o ricevere rimborso, in accordo con i <a href="/termini.html" target="_blank">Termini e Condizioni</a>. Prima di completare il pagamento, ti verrà mostrato un avviso esplicito di questa condizione.</div></details></div></div><aside class="faq-contatto"><div class="eyebrow" style="color:#f97316">Contattaci</div><h3>Hai altre domande o proposte?</h3><p>Scrivici tramite il modulo: ti risponderemo il prima possibile.</p><button type="button" onclick="apriModaleCollaborazione()" class="m-submit">✉️ Apri il modulo di contatto</button></aside></div></section>
 
 <section class="social-sec" hidden><div class="container"><div class="social-inner"><div class="social-text"><div class="eyebrow" style="color:#f97316">Seguimi sui social</div><h2 class="social-title">Ti è stato utile?<br/>Resta in contatto! 🙌</h2><p class="social-desc">Realizzato con passione da <strong>Analizzaste</strong>. Seguici su Instagram per altri contenuti su investimenti e aste.</p><div class="social-cards">
   <a href="https://www.instagram.com/analizzaste.it/" target="_blank" class="social-card ig"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></div><div class="sc-info"><div class="sc-name">Instagram</div><div class="sc-handle">@analizzaste.it</div><div class="sc-cta">❤️ Seguimi →</div></div></a>
   <a href="mailto:analizzaste@gmail.com" class="social-card em"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></div><div class="sc-info"><div class="sc-name">Email</div><div class="sc-handle">analizzaste@gmail.com</div><div class="sc-cta">✉️ Scrivimi →</div></div></a>
 </div></div></div></div></section>
 
-<section class="social-sec" id="contattaci"><div class="container"><div class="social-inner"><div class="eyebrow" style="color:#f97316">Contattaci</div><h2 class="social-title">Hai domande o proposte?</h2><p class="social-desc">Scrivici tramite il modulo: ti risponderemo il prima possibile.</p><button type="button" onclick="apriModaleCollaborazione()" class="m-submit" style="width:auto;padding:14px 28px">✉️ Apri il modulo di contatto</button></div></div></section>
+
 
 <footer class="site-footer">
   <div class="ft-news">
