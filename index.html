@@ -1015,7 +1015,9 @@ async function caricaAnalisiStorico(id){
 }
 async function eliminaAnalisiStorico(id){
   if(!confirm('Eliminare questa analisi?')) return;
-  await sb.from('reports').delete().eq('id', id).eq('user_id', currentUser.id); apriStorico();
+  const {error} = await sb.from('reports').delete().eq('id', id).eq('user_id', currentUser.id);
+  if(error){ alert('Eliminazione non riuscita: ' + error.message); return; }
+  apriStorico();
 }
 
 // ── ADMIN CREDITI ──
