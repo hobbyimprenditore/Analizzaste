@@ -105,8 +105,22 @@
     .topbar-cta:hover{background:var(--blue-dark)!important}
 
     /* HERO */
-    .hero{background:linear-gradient(135deg,#0f1117 0%,#1e2433 100%);color:white;padding:72px 24px 88px;display:flex;align-items:center;justify-content:center;gap:56px;flex-wrap:wrap}
+    .hero{background:linear-gradient(135deg,#0f1117 0%,#1e2433 100%);color:white;padding:72px 24px 88px;display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap}
     .hero-content{max-width:500px}
+    /* Mappa delle aste in primo piano, tra i testi e il report */
+    .hero-mappa{position:relative;display:flex;flex-direction:column;align-items:center;width:340px;flex-shrink:0;color:white;text-decoration:none;z-index:1}
+    .hero-mappa:hover{text-decoration:none}
+    .hero-mappa::before{content:"";position:absolute;inset:4% -8% 22%;background:radial-gradient(closest-side,rgba(59,130,246,.38),rgba(59,130,246,0));z-index:-1;pointer-events:none}
+    .hm-scena{width:100%;perspective:900px}
+    .hm-scena img{display:block;width:100%;height:auto;transform:rotateX(24deg) rotateZ(-5deg);transform-origin:50% 60%;filter:drop-shadow(0 26px 26px rgba(0,0,0,.55));transition:transform .5s ease}
+    .hero-mappa:hover .hm-scena img,.hero-mappa:focus-visible .hm-scena img{transform:rotateX(12deg) rotateZ(-2deg) scale(1.03)}
+    .hm-testo{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;margin-top:-6px}
+    .hm-badge{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#93c5fd}
+    .hm-conto{font-size:22px;font-weight:800;letter-spacing:-.02em}
+    .hm-sub{font-size:14px;color:rgba(255,255,255,.7)}
+    .hm-cta{margin-top:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:100px;padding:8px 18px;font-size:14px;font-weight:700;transition:background .2s}
+    .hero-mappa:hover .hm-cta{background:var(--blue);border-color:var(--blue)}
+    @media (prefers-reduced-motion:reduce){.hm-scena img{transition:none}}
     .hero-pill{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:100px;padding:6px 16px;font-size:13px;font-weight:600;margin-bottom:22px;color:rgba(255,255,255,.85)}
 .bonus-banner{display:block;max-width:520px;background:linear-gradient(90deg,rgba(22,163,74,.22),rgba(37,99,235,.22));border:1px solid rgba(134,239,172,.45);border-radius:12px;padding:12px 16px;margin:-8px 0 22px;font-size:15px;line-height:1.45;color:#fff}
 .bonus-banner b{color:#86efac;font-size:17px}
@@ -296,11 +310,16 @@
     .btn-new:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-pale)}
 
     /* FAQ */
-    .faq-sec{background:white;border-top:1px solid var(--border);padding:72px 0}
-    .faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .faq-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:22px}
-    .faq-q{font-size:15px;font-weight:800;margin-bottom:8px}
-    .faq-a{font-size:14px;color:var(--ink-mid);line-height:1.65}
+    .faq-sec{background:white;border-top:1px solid var(--border);padding:44px 0}
+    .faq-sec .sec-title{margin-bottom:20px}
+    .faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+    .faq-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm)}
+    .faq-q{font-size:14px;font-weight:700;padding:12px 40px 12px 16px;cursor:pointer;list-style:none;position:relative}
+    .faq-q::-webkit-details-marker{display:none}
+    .faq-q::after{content:"+";position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:600;color:var(--blue)}
+    .faq-item[open] .faq-q::after{content:"–"}
+    .faq-q:hover{color:var(--blue)}
+    .faq-a{font-size:14px;color:var(--ink-mid);line-height:1.6;padding:0 16px 14px}
 
     /* Footer */
     .site-footer{background:var(--ink);color:rgba(255,255,255,.5);padding:44px 24px;text-align:center}
@@ -405,6 +424,7 @@
     @media(max-width:680px){
       .hero{padding:44px 18px 56px;flex-direction:column;gap:28px}
       .hero-card{display:none}
+      .hero-mappa{width:min(320px,100%)}
       .steps-grid{flex-direction:column}
       .step-arr{display:none}
       .block{padding:22px 18px}
@@ -412,7 +432,7 @@
       .api-row{flex-direction:column}
       .icard-grid{grid-template-columns:1fr}
       .faq-grid{grid-template-columns:1fr}
-      .topbar-links a:not(.topbar-cta):not(.topbar-mappa){display:none}
+      .topbar-links a:not(.topbar-cta){display:none}
       .res-top{flex-direction:column;align-items:flex-start}
     }
 
@@ -566,7 +586,6 @@
       <img class="brand-banner" src="/img/brand-banner-final.png?v=1" alt="Analizzaste - Analisi Aste Immobiliari" style="height:72px;object-fit:contain" />
     </div>
     <div class="topbar-links">
-      <a href="/mappa.html" class="topbar-mappa">🗺️ Mappa aste</a>
       <a href="#come-funziona">Come funziona</a>
       <a href="#inizia" class="topbar-cta" id="ctaInizia" onclick="return topCtaClick(event)">Inizia →</a>
       <div id="creditPanel" class="hidden" style="display:flex;align-items:center;gap:8px;margin-right:8px">
@@ -672,6 +691,15 @@
     </div>
     <a href="#inizia" class="hero-btn" onclick="return topCtaClick(event)">Analizza il tuo avviso →</a>
   </div>
+  <a href="/mappa.html" class="hero-mappa" aria-label="Apri la mappa delle aste immobiliari in Italia">
+    <div class="hm-scena"><img src="/img/mappa-italia-aste.svg?v=1" alt="" width="400" height="477" /></div>
+    <div class="hm-testo">
+      <span class="hm-badge">🗺️ Mappa aste</span>
+      <b class="hm-conto" id="hmConto">Tutte le aste d'Italia</b>
+      <span class="hm-sub">su una mappa, aggiornate ogni notte</span>
+      <span class="hm-cta">Esplora la mappa →</span>
+    </div>
+  </a>
   <div class="hero-card">
     <div class="hc-head"><span class="hc-dot r"></span><span class="hc-dot y"></span><span class="hc-dot g"></span><span class="hc-title">Report Analisi</span></div>
     <div class="hc-row"><span class="hc-lbl">Tribunale</span><span class="hc-val">Milano</span></div>
@@ -756,7 +784,7 @@
 </section>
 
 <!-- FAQ + SOCIAL + FOOTER (identici) -->
-<section class="faq-sec"><div class="container"><div class="eyebrow">Domande frequenti</div><h2 class="sec-title">Hai dei dubbi?</h2><div class="faq-grid"><div class="faq-item"><div class="faq-q">È sicuro usare questo strumento?</div><div class="faq-a">Sì. I tuoi documenti passano da un server proxy sicuro e vengono analizzati dall'intelligenza artificiale di Anthropic (Claude). I file non vengono conservati: resta solo il report, nel tuo storico, e puoi eliminarlo quando vuoi. Dettagli nei <a href="/termini.html" target="_blank">Termini e Condizioni</a>.</div></div><div class="faq-item"><div class="faq-q">Che formati di file posso caricare?</div><div class="faq-a">PDF, Word, testo e immagini. Puoi caricare più file insieme.</div></div><div class="faq-item"><div class="faq-q">L'analisi sostituisce un avvocato?</div><div class="faq-a">No. È uno strumento di supporto. Per decisioni importanti, consulta un avvocato.</div></div><div class="faq-item"><div class="faq-q">Se carico più file cosa succede?</div><div class="faq-a">Il sistema li analizza tutti e li unisce in un unico report.</div></div><div class="faq-item"><div class="faq-q">I gettoni ottenuti con le donazioni sono rimborsabili?</div><div class="faq-a"><strong>No, i gettoni non sono rimborsabili.</strong> Le donazioni sono definitive. Sia i gettoni utilizzati che quelli rimasti nel tuo account non potranno essere convertiti in denaro o ricevere rimborso, in accordo con i <a href="/termini.html" target="_blank">Termini e Condizioni</a>. Prima di completare il pagamento, ti verrà mostrato un avviso esplicito di questa condizione.</div></div></div></div></section>
+<section class="faq-sec"><div class="container"><div class="eyebrow">Domande frequenti</div><h2 class="sec-title">Hai dei dubbi?</h2><div class="faq-grid"><details class="faq-item"><summary class="faq-q">È sicuro usare questo strumento?</summary><div class="faq-a">Sì. I tuoi documenti passano da un server proxy sicuro e vengono analizzati dall'intelligenza artificiale di Anthropic (Claude). I file non vengono conservati: resta solo il report, nel tuo storico, e puoi eliminarlo quando vuoi. Dettagli nei <a href="/termini.html" target="_blank">Termini e Condizioni</a>.</div></details><details class="faq-item"><summary class="faq-q">Che formati di file posso caricare?</summary><div class="faq-a">PDF, Word, testo e immagini. Puoi caricare più file insieme.</div></details><details class="faq-item"><summary class="faq-q">L'analisi sostituisce un avvocato?</summary><div class="faq-a">No. È uno strumento di supporto. Per decisioni importanti, consulta un avvocato.</div></details><details class="faq-item"><summary class="faq-q">Se carico più file cosa succede?</summary><div class="faq-a">Il sistema li analizza tutti e li unisce in un unico report.</div></details><details class="faq-item"><summary class="faq-q">I gettoni ottenuti con le donazioni sono rimborsabili?</summary><div class="faq-a"><strong>No, i gettoni non sono rimborsabili.</strong> Le donazioni sono definitive. Sia i gettoni utilizzati che quelli rimasti nel tuo account non potranno essere convertiti in denaro o ricevere rimborso, in accordo con i <a href="/termini.html" target="_blank">Termini e Condizioni</a>. Prima di completare il pagamento, ti verrà mostrato un avviso esplicito di questa condizione.</div></details></div></div></section>
 
 <section class="social-sec" hidden><div class="container"><div class="social-inner"><div class="social-text"><div class="eyebrow" style="color:#f97316">Seguimi sui social</div><h2 class="social-title">Ti è stato utile?<br/>Resta in contatto! 🙌</h2><p class="social-desc">Realizzato con passione da <strong>Analizzaste</strong>. Seguici su Instagram per altri contenuti su investimenti e aste.</p><div class="social-cards">
   <a href="https://www.instagram.com/analizzaste.it/" target="_blank" class="social-card ig"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></div><div class="sc-info"><div class="sc-name">Instagram</div><div class="sc-handle">@analizzaste.it</div><div class="sc-cta">❤️ Seguimi →</div></div></a>
@@ -915,6 +943,12 @@ if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudf
 const SUPABASE_URL='https://hvmnernovucnsksszsbe.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_5bBF51zEshWF3YtBh-YQoA_keV7WfCH';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+// Numero di aste in corso sotto la cartina della home
+(async()=>{try{
+  const oggi=new Date().toISOString().slice(0,10);
+  const {count,error}=await sb.from('aste_pvp').select('id',{count:'exact',head:true}).eq('attiva',true).gte('data_vendita',oggi);
+  if(!error&&count>0) document.getElementById('hmConto').textContent=count.toLocaleString('it-IT')+' aste in corso';
+}catch(e){}})();
 // ── NEWSLETTER ──
 async function iscriviNewsletter(email,fonte){
   const {error}=await sb.from('newsletter_iscritti').insert({email:String(email).trim().toLowerCase(),fonte});
