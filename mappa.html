@@ -113,6 +113,19 @@
     .cl{background:rgba(37,99,235,.18);border-radius:50%}
     .cl div{background:var(--blue);color:white;border-radius:50%;width:calc(100% - 8px);height:calc(100% - 8px);margin:4px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 
+    /* PREFERITI */
+    .stella{background:var(--white);border:1px solid var(--border-mid);border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;padding:7px 10px;color:var(--ink-mid);display:flex;align-items:center;justify-content:center;gap:6px}
+    .stella:hover{border-color:var(--yellow)}
+    .stella.on{background:var(--yellow-pale);border-color:#fcd34d;color:#92400e}
+    .item{position:relative;padding-right:44px}
+    .item-stella{position:absolute;right:14px;bottom:10px;background:none;border:none;font-size:18px;line-height:1;cursor:pointer;color:var(--border-mid);padding:4px}
+    .item-stella.on{color:#f59e0b}
+    .item-stella:hover{color:#f59e0b}
+    .item.concluso{opacity:.65;cursor:default}
+    .utente-top{font-size:13px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+    .avviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 18px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:var(--sh);max-width:calc(100% - 32px)}
+    .avviso a{color:#93c5fd;font-weight:700}
+
     .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:500;background:rgba(248,249,252,.7);font-weight:700;color:var(--ink-mid)}
     .map-wrap{position:relative;min-height:0}
     .map-wrap #map{position:absolute;inset:0}
@@ -128,6 +141,9 @@
       .side{border-right:none;border-bottom:1px solid var(--border);max-height:none}
       .side .filters,.side .list-head,.side .list,.side .fonte{display:none}
       .side.aperto .filters{display:grid}
+      .side.aperto .list-head{display:block}
+      .side.aperto .list{display:block;max-height:45vh}
+      .utente-top{display:none}
       .side-head{padding:12px 16px}
       .side-head h1{font-size:17px}
       .toggle-filtri{display:inline-block;margin-top:10px}
@@ -143,6 +159,7 @@
       <img class="brand-img" src="/img/brand-banner-final.png?v=1" alt="Analizzaste - Analisi Aste Immobiliari" />
     </a>
     <nav class="topbar-links">
+      <span class="utente-top" id="utenteTop"></span>
       <a href="/#come-funziona">Come funziona</a>
       <a href="/#inizia" class="topbar-cta">Analizza un avviso →</a>
     </nav>
@@ -195,13 +212,14 @@
         </div>
       </div>
       <label class="check"><input type="checkbox" id="fLibero" /> Solo immobili liberi</label>
+      <label class="check"><input type="checkbox" id="fPreferiti" /> ⭐ Solo i miei preferiti <span id="nPreferiti" style="color:var(--ink-soft)"></span></label>
       <div class="f-foot">
         <span id="nFiltrate"></span>
         <button class="linkbtn" type="button" id="azzera">Azzera filtri</button>
       </div>
     </form>
 
-    <div class="list-head">Prossime aste nella zona</div>
+    <div class="list-head" id="titoloLista">Prossime aste nella zona</div>
     <div class="list" id="lista"><div class="empty">Caricamento…</div></div>
     <div class="fonte" id="fonte">Dati: Portale delle Vendite Pubbliche (Ministero della Giustizia).</div>
   </aside>
@@ -214,10 +232,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SUPABASE_URL='https://hvmnernovucnsksszsbe.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_5bBF51zEshWF3YtBh-YQoA_keV7WfCH';
 const SB_HEADERS={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY};
+// Stesso client di index.html: la sessione di login è condivisa su tutto il dominio
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const CATEGORIE={
   R:{nome:'Residenziale',colore:'#2563eb'},
@@ -295,10 +316,91 @@ function popupBase(a,det){
   if(det&&det.descrizione) h+=`<div class="pp-desc">${esc(det.descrizione)}</div>`;
   else if(!det) h+=`<div class="pp-desc" style="color:var(--ink-xs)">Carico i dettagli…</div>`;
   h+=`<div class="pp-btns">
+    ${bottoneStella(a[I_ID])}
     <a class="pp-btn sec" href="${urlPvp(a[I_ID])}" target="_blank" rel="noopener">Apri la scheda sul PVP ↗</a>
     <a class="pp-btn pri" href="/#inizia" title="Scarica l'avviso o la perizia dalla scheda PVP e caricali su Analizzaste">Analizza l'avviso con Analizzaste →</a>
   </div>`;
   return h;
+}
+
+/* ---------- preferiti ---------- */
+let utente=null;
+const preferiti=new Set();
+const URL_ACCEDI='/?accedi=1&torna=mappa';
+
+function bottoneStella(id){
+  const on=preferiti.has(id);
+  return `<button type="button" class="stella ${on?'on':''}" data-stella="${id}">${on?'★ Nei preferiti':'☆ Salva nei preferiti'}</button>`;
+}
+
+let tAvviso;
+function avviso(html){
+  let el=document.getElementById('avviso');
+  if(!el){el=document.createElement('div');el.id='avviso';el.className='avviso';el.setAttribute('role','status');document.body.appendChild(el);}
+  el.innerHTML=html; el.hidden=false;
+  clearTimeout(tAvviso); tAvviso=setTimeout(()=>{el.hidden=true},5000);
+}
+
+async function caricaUtente(){
+  const {data:{session}}=await sb.auth.getSession();
+  utente=session?session.user:null;
+  preferiti.clear();
+  if(utente){
+    const {data,error}=await sb.from('aste_preferite').select('asta_id').limit(1000);
+    if(!error) data.forEach(r=>preferiti.add(Number(r.asta_id)));
+    $('utenteTop').textContent=utente.email;
+  }else{
+    $('utenteTop').innerHTML=`<a href="${URL_ACCEDI}">Accedi</a>`;
+  }
+  aggiornaContoPreferiti();
+}
+
+function aggiornaContoPreferiti(){
+  $('nPreferiti').textContent=utente?`(${preferiti.size})`:'';
+}
+
+async function cambiaPreferito(id){
+  if(!utente){
+    avviso(`Per salvare le aste nei preferiti <a href="${URL_ACCEDI}">accedi o registrati</a>: è gratis.`);
+    return;
+  }
+  const era=preferiti.has(id);
+  era?preferiti.delete(id):preferiti.add(id);   // aggiorno subito lo schermo
+  ridisegnaStelle(id);
+  const {error}=era
+    ?await sb.from('aste_preferite').delete().eq('user_id',utente.id).eq('asta_id',id)
+    :await sb.from('aste_preferite').insert({user_id:utente.id,asta_id:id});
+  if(error&&error.code!=='23505'){                // 23505 = era già nei preferiti
+    era?preferiti.add(id):preferiti.delete(id);
+    ridisegnaStelle(id);
+    avviso(esc(/limite/i.test(error.message)?error.message:'Non sono riuscito a salvare il preferito, riprova.'));
+    return;
+  }
+  if($('fPreferiti').checked) applicaFiltri();
+}
+
+function ridisegnaStelle(id){
+  aggiornaContoPreferiti();
+  const on=preferiti.has(id);
+  document.querySelectorAll(`[data-stella="${id}"]`).forEach(b=>{
+    b.classList.toggle('on',on);
+    if(b.classList.contains('stella')) b.textContent=on?'★ Nei preferiti':'☆ Salva nei preferiti';
+    else {b.textContent=on?'★':'☆';b.title=on?'Togli dai preferiti':'Salva nei preferiti';}
+  });
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-stella]'); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  cambiaPreferito(Number(b.dataset.stella));
+});
+
+// Preferiti che non sono più sulla mappa (asta passata o tolta dal PVP)
+async function preferitiConclusi(){
+  const mancanti=[...preferiti].filter(id=>!markerPerId.has(id));
+  if(!mancanti.length) return [];
+  const {data}=await sb.from('aste_pvp').select('id,citta,provincia,prezzo_base,data_vendita,categoria,esito').in('id',mancanti);
+  return data||[];
 }
 
 const cacheDettagli=new Map();
@@ -330,6 +432,7 @@ $('fCategorie').addEventListener('click',e=>{
 });
 
 function passaFiltri(a){
+  if($('fPreferiti').checked) return preferiti.has(a[I_ID]); // i preferiti si vedono tutti, senza altri filtri
   if(!statoCat.has(a[I_CAT])) return false;
   const pmax=Number($('fPrezzo').value); if(pmax&&!(a[I_PREZZO]>0&&a[I_PREZZO]<=pmax)) return false;
   const gg=Number($('fGiorni').value);
@@ -345,38 +448,79 @@ function applicaFiltri(zoom){
   visibili=aste.filter(passaFiltri);
   cluster.clearLayers();
   cluster.addLayers(visibili.map(a=>markerPerId.get(a[I_ID])));
-  $('nFiltrate').textContent=visibili.length===aste.length?'Nessun filtro attivo':`${visibili.length.toLocaleString('it-IT')} aste con questi filtri`;
-  if(zoom&&visibili.length&&$('fLuogo').value.trim()){
+  const soloPref=$('fPreferiti').checked;
+  $('nFiltrate').textContent=soloPref?`${visibili.length} preferiti in mappa`
+    :visibili.length===aste.length?'Nessun filtro attivo':`${visibili.length.toLocaleString('it-IT')} aste con questi filtri`;
+  if(zoom&&visibili.length&&($('fLuogo').value.trim()||soloPref)){
     map.fitBounds(L.latLngBounds(visibili.map(a=>[a[I_LAT],a[I_LNG]])),{padding:[40,40],maxZoom:13});
   }
   aggiornaLista();
 }
 
-function aggiornaLista(){
-  const b=map.getBounds();
-  const inZona=visibili.filter(a=>b.contains([a[I_LAT],a[I_LNG]]));
+function voceLista(a){
+  const cat=CATEGORIE[a[I_CAT]]||CATEGORIE.A, on=preferiti.has(a[I_ID]);
+  return `<div class="item" role="button" tabindex="0" data-id="${a[I_ID]}">
+    <div class="item-top"><span class="item-prezzo">${fmtPrezzo(a[I_PREZZO])}</span><span class="item-data">${fmtData(a[I_DATA])}</span></div>
+    <div class="item-luogo">${esc(a[I_CITTA]||'')}${a[I_PROV]&&a[I_PROV]!==a[I_CITTA]?' ('+esc(a[I_PROV])+')':''}</div>
+    <span class="tag" style="background:${cat.colore}1a;color:${cat.colore}">${cat.nome}</span>${tagDisp(a[I_DISP])}
+    <button type="button" class="item-stella ${on?'on':''}" data-stella="${a[I_ID]}" title="${on?'Togli dai preferiti':'Salva nei preferiti'}">${on?'★':'☆'}</button>
+  </div>`;
+}
+
+function voceConclusa(r){
+  const esiti={SOSPE:'Asta sospesa',AGGIU:'Aggiudicata',ASDES:'Asta deserta'};
+  const stato=(r.data_vendita&&r.data_vendita<new Date().toISOString().slice(0,10))?'Asta già svolta':(esiti[r.esito]||'Non più sul PVP');
+  return `<div class="item concluso">
+    <div class="item-top"><span class="item-prezzo">${fmtPrezzo(r.prezzo_base)}</span><span class="item-data">${fmtData(r.data_vendita)}</span></div>
+    <div class="item-luogo">${esc(r.citta||'')}${r.provincia&&r.provincia!==r.citta?' ('+esc(r.provincia)+')':''} · <a href="${urlPvp(r.id)}" target="_blank" rel="noopener">scheda PVP ↗</a></div>
+    <span class="tag" style="background:#f1f5f9;color:#475569">${stato}</span>
+    <button type="button" class="item-stella on" data-stella="${r.id}" title="Togli dai preferiti">★</button>
+  </div>`;
+}
+
+let seqLista=0;
+async function aggiornaLista(){
+  const seq=++seqLista;
+  const b=map.getBounds(), soloPref=$('fPreferiti').checked;
+  // con i preferiti mostro tutto l'elenco, non solo la zona visibile
+  const inZona=soloPref?visibili:visibili.filter(a=>b.contains([a[I_LAT],a[I_LNG]]));
   $('nZona').textContent=inZona.length.toLocaleString('it-IT');
-  const primi=inZona.slice(0,60); // già ordinate per data
-  $('lista').innerHTML=primi.length?primi.map(a=>{
-    const cat=CATEGORIE[a[I_CAT]]||CATEGORIE.A;
-    return `<button class="item" type="button" data-id="${a[I_ID]}">
-      <div class="item-top"><span class="item-prezzo">${fmtPrezzo(a[I_PREZZO])}</span><span class="item-data">${fmtData(a[I_DATA])}</span></div>
-      <div class="item-luogo">${esc(a[I_CITTA]||'')}${a[I_PROV]&&a[I_PROV]!==a[I_CITTA]?' ('+esc(a[I_PROV])+')':''}</div>
-      <span class="tag" style="background:${cat.colore}1a;color:${cat.colore}">${cat.nome}</span>${tagDisp(a[I_DISP])}
-    </button>`}).join('')+(inZona.length>primi.length?`<div class="empty">Altre ${(inZona.length-primi.length).toLocaleString('it-IT')} aste: avvicinati sulla mappa per vederle.</div>`:'')
-    :'<div class="empty">Nessuna asta in questa zona con i filtri scelti.</div>';
+  $('titoloLista').textContent=soloPref?'I miei preferiti in asta':'Prossime aste nella zona';
+  const primi=soloPref?inZona:inZona.slice(0,60); // già ordinate per data
+  let html=primi.map(voceLista).join('');
+  if(!soloPref&&inZona.length>primi.length) html+=`<div class="empty">Altre ${(inZona.length-primi.length).toLocaleString('it-IT')} aste: avvicinati sulla mappa per vederle.</div>`;
+  if(soloPref){
+    const conclusi=await preferitiConclusi();
+    if(seq!==seqLista) return;
+    if(conclusi.length) html+=`<div class="list-head">Preferiti non più in asta</div>`+conclusi.map(voceConclusa).join('');
+    if(!html) html='<div class="empty">Non hai ancora aste nei preferiti. Apri un\'asta sulla mappa e premi ☆ per salvarla.</div>';
+  }
+  $('lista').innerHTML=html||'<div class="empty">Nessuna asta in questa zona con i filtri scelti.</div>';
 }
 $('lista').addEventListener('click',e=>{
-  const it=e.target.closest('.item'); if(!it) return;
+  if(e.target.closest('[data-stella]')) return; // la stella la gestisce cambiaPreferito
+  const it=e.target.closest('.item[data-id]'); if(!it) return;
   const m=markerPerId.get(Number(it.dataset.id)); if(!m) return;
   cluster.zoomToShowLayer(m,()=>m.openPopup());
+});
+
+$('lista').addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches('.item[data-id]')){e.preventDefault();e.target.click();}
 });
 
 let tLista; map.on('moveend',()=>{clearTimeout(tLista);tLista=setTimeout(aggiornaLista,120)});
 let tLuogo; $('fLuogo').addEventListener('input',()=>{clearTimeout(tLuogo);tLuogo=setTimeout(()=>applicaFiltri(true),300)});
 ['fPrezzo','fGiorni','fLibero'].forEach(id=>$(id).addEventListener('change',()=>applicaFiltri()));
+$('fPreferiti').addEventListener('change',()=>{
+  if($('fPreferiti').checked&&!utente){
+    $('fPreferiti').checked=false;
+    avviso(`Per vedere i tuoi preferiti <a href="${URL_ACCEDI}">accedi o registrati</a>.`);
+    return;
+  }
+  applicaFiltri(true);
+});
 $('azzera').addEventListener('click',()=>{
-  $('fLuogo').value='';$('fPrezzo').value='';$('fGiorni').value='';$('fLibero').checked=false;
+  $('fLuogo').value='';$('fPrezzo').value='';$('fGiorni').value='';$('fLibero').checked=false;$('fPreferiti').checked=false;
   Object.keys(CATEGORIE).forEach(k=>statoCat.add(k)); disegnaChip(); applicaFiltri();
   map.setView([42.2,12.5],6);
 });
@@ -399,7 +543,10 @@ async function carica(){
       const dt=new Date(d.aggiornato_al);
       $('fonte').innerHTML=`Dati: <a href="https://pvp.giustizia.it/pvp/" target="_blank" rel="noopener">Portale delle Vendite Pubbliche</a>, aggiornati il ${dt.toLocaleDateString('it-IT')} alle ${dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}. Verifica sempre i dati sulla scheda ufficiale.`;
     }
-    applicaFiltri();
+    try{await caricaUtente();}catch(e){/* senza login la mappa funziona lo stesso */}
+    const daAccount=new URLSearchParams(location.search).get('preferiti')==='1';
+    if(daAccount&&utente) $('fPreferiti').checked=true;
+    applicaFiltri(daAccount);
   }catch(e){
     $('lista').innerHTML='<div class="empty">Non riesco a caricare le aste in questo momento. Riprova tra poco.</div>';
     $('nTotali').textContent='–';
