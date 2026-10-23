@@ -6,6 +6,8 @@
   var _iub = _iub || [];
   _iub.csConfiguration = {"siteId":4704994,"cookiePolicyId":19835445,"storage":{"useSiteId":true},
     "callback":{"onPreferenceExpressedOrNotNeeded":function(p){
+      // Il video intro parte solo dopo la scelta sui cookie, così non si sovrappone al banner
+      window.__preferenzaCookieEspressa=true; if(window.__avviaVideoIntro) window.__avviaVideoIntro();
       // Google Analytics solo con consenso alla finalità "Misurazione" (4)
       if(p && (p.consent===true || (p.purposes && p.purposes["4"]===true))){
         window.__gaConsenso=true; if(window.caricaAnalytics) window.caricaAnalytics();
@@ -1468,12 +1470,14 @@ function handleVideoEnd(){
   }
 }
 
-// Inizializza il video intro al caricamento della pagina
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',initVideoIntro);
-}else{
-  initVideoIntro();
-}
+// Inizializza il video intro solo dopo la scelta sul banner cookie (iubenda)
+window.__avviaVideoIntro=function(){
+  if(window.__videoIntroAvviato)return; window.__videoIntroAvviato=true;
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initVideoIntro);}else{initVideoIntro();}
+};
+if(window.__preferenzaCookieEspressa)window.__avviaVideoIntro();
+// Se iubenda non si carica (es. ad-blocker), il video parte comunque dopo 8 secondi
+setTimeout(function(){if(!(window._iub&&_iub.cs&&_iub.cs.api))window.__avviaVideoIntro();},8000);
 caricaManutenzione();
 </script>
 </body>
