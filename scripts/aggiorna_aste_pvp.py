@@ -123,8 +123,10 @@ def nominatim(testo):
     return None
 
 
-def geocodifica(aste, cache, minuti):
-    """Aggiunge a `cache` le chiavi mancanti, entro il tempo concesso. Restituisce le nuove voci."""
+def geocodifica(aste, cache, minuti, salva=None, blocco=100):
+    """Aggiunge a `cache` le chiavi mancanti, entro il tempo concesso. Restituisce le nuove voci.
+    Se c'è `salva`, la chiama ogni `blocco` nuove voci: così la mappa si riempie man mano
+    e un'interruzione non fa perdere il lavoro fatto."""
     senza = [a['indirizzo'] or {} for a in aste if not coordinate_valide(*coord_pvp(a))]
     # prima i comuni (pochi e bastano a mettere tutto sulla mappa), poi gli indirizzi precisi
     da_fare = {}
@@ -139,8 +141,11 @@ def geocodifica(aste, cache, minuti):
                           f"{pulisci(ind.get('provincia'))}, Italia")
     log(f'Geocodifica: {len(da_fare)} ricerche da fare, massimo {minuti} minuti')
 
-    nuove, fine = {}, time.time() + minuti * 60
+    nuove, da_salvare, fine = {}, [], time.time() + minuti * 60
     for k, testo in da_fare.items():
+        if salva and len(da_salvare) >= blocco:
+            salva(da_salvare)
+            da_salvare = []
         if time.time() > fine:
             break
         try:
@@ -154,7 +159,10 @@ def geocodifica(aste, cache, minuti):
                 p = None
         voce = {'chiave': k, 'lat': p[0] if p else None, 'lng': p[1] if p else None, 'trovato': bool(p)}
         cache[k] = nuove[k] = voce
+        da_salvare.append(voce)
         time.sleep(1.1)  # regola di Nominatim: al massimo 1 richiesta al secondo
+    if salva and da_salvare:
+        salva(da_salvare)
     log(f'Geocodifica: {len(nuove)} fatte, {sum(v["trovato"] for v in nuove.values())} trovate')
     return list(nuove.values())
 
@@ -260,14 +268,31 @@ def main():
                  'probabile problema del portale, non aggiorno nulla.')
 
     cache = {v['chiave']: v for v in sb.leggi_tutto('geocodifiche', 'chiave,lat,lng,trovato')}
-    nuove = geocodifica(aste, cache, float(os.environ.get('GEOCODIFICA_MINUTI', '60')))
-    if nuove:
-        sb.upsert('geocodifiche', nuove, 'chiave')
 
+    # 1) salvo subito tutte le aste con le coordinate che ho già: la mappa è aggiornata in pochi minuti
     righe = [riga(a, cache, inizio) for a in aste]
     sb.upsert('aste_pvp', righe, 'id')
     sb.disattiva_vecchie(inizio)
+    senza_prima = sum(1 for r in righe if r['lat'] is None)
+    log(f'Salvate {len(righe)} aste, {senza_prima} ancora senza coordinate: parte la geocodifica')
 
+    # 2) cerco le coordinate mancanti e aggiorno a blocchi le aste che ne approfittano
+    da_geocodificare = [a for a in aste if posizione(a, cache)[0] is None]
+
+    def salva_blocco(voci):
+        sb.upsert('geocodifiche', voci, 'chiave')
+        nuove_righe, restano = [], []
+        for a in da_geocodificare:
+            r = riga(a, cache, inizio)
+            (nuove_righe if r['lat'] is not None else restano).append(r if r['lat'] is not None else a)
+        da_geocodificare[:] = restano
+        if nuove_righe:
+            sb.upsert('aste_pvp', nuove_righe, 'id')
+        log(f'  salvate {len(voci)} ricerche, {len(nuove_righe)} aste in più sulla mappa')
+
+    geocodifica(aste, cache, float(os.environ.get('GEOCODIFICA_MINUTI', '60')), salva_blocco)
+
+    righe = [riga(a, cache, inizio) for a in aste]
     senza = sum(1 for r in righe if r['lat'] is None)
     log(f'Fatto: {len(righe)} aste salvate, {sb.conta("attiva=eq.true")} attive, '
         f'{senza} ancora senza coordinate')
