@@ -1,0 +1,37 @@
+name: Aste PVP notturne
+
+# Scarica ogni notte le aste immobiliari dal PVP e aggiorna la tabella aste_pvp su Supabase,
+# che alimenta mappa.html. Tiene anche attivo il database (come il Keep Alive).
+on:
+  schedule:
+    - cron: '30 1 * * *'   # 01:30 UTC = 02:30/03:30 in Italia
+  workflow_dispatch:
+    inputs:
+      minuti_geocodifica:
+        description: 'Minuti massimi di geocodifica (Nominatim, 1 ricerca al secondo)'
+        default: '60'
+
+concurrency:
+  group: aste-pvp
+  cancel-in-progress: false
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scarica le aste dal PVP e aggiorna Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEOCODIFICA_MINUTI: ${{ github.event.inputs.minuti_geocodifica || '60' }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Mancano i secret SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY (vedi GITHUB_SECRETS_SETUP.md)"
+            exit 1
+          fi
+          python scripts/aggiorna_aste_pvp.py
