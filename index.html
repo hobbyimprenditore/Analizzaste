@@ -412,7 +412,7 @@
       .api-row{flex-direction:column}
       .icard-grid{grid-template-columns:1fr}
       .faq-grid{grid-template-columns:1fr}
-      .topbar-links a:not(.topbar-cta){display:none}
+      .topbar-links a:not(.topbar-cta):not(.topbar-mappa){display:none}
       .res-top{flex-direction:column;align-items:flex-start}
     }
 
@@ -566,6 +566,7 @@
       <img class="brand-banner" src="/img/brand-banner-final.png?v=1" alt="Analizzaste - Analisi Aste Immobiliari" style="height:72px;object-fit:contain" />
     </div>
     <div class="topbar-links">
+      <a href="/mappa.html" class="topbar-mappa">🗺️ Mappa aste</a>
       <a href="#come-funziona">Come funziona</a>
       <a href="#inizia" class="topbar-cta" id="ctaInizia" onclick="return topCtaClick(event)">Inizia →</a>
       <div id="creditPanel" class="hidden" style="display:flex;align-items:center;gap:8px;margin-right:8px">
@@ -575,6 +576,7 @@
           <span style="font-weight:400;color:var(--ink-soft)">gettoni</span>
         </div>
         <button onclick="apriStorico()" title="Storico analisi" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink-mid);cursor:pointer;white-space:nowrap">📊 Storico</button>
+        <a href="/mappa.html?preferiti=1" title="Le aste che hai salvato sulla mappa" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink-mid);white-space:nowrap;text-decoration:none">⭐ Preferiti</a>
         <button onclick="apriPannelloAdminCrediti()" id="btnAdminCrediti" title="Ricarica gettoni (Admin)" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:13px;font-weight:700;color:white;cursor:pointer;white-space:nowrap">👑 Ricarica</button>
       </div>
       <div class="user-badge hidden" id="userBadge">
@@ -933,7 +935,7 @@ let isAdmin=false;
 
 async function initAuth(){
   const{data:{session}}=await sb.auth.getSession();
-  if(session){await afterAuthCheck(session);}else{setAuthUI(null);}
+  if(session){await afterAuthCheck(session);}else{setAuthUI(null);if(new URLSearchParams(location.search).get('accedi')==='1')openAuthModal('login');}
   sb.auth.onAuthStateChange((event,session)=>{
     if(event==='PASSWORD_RECOVERY'){
       openAuthModal('login');$('viewAuth').classList.add('hidden');$('viewForgot').classList.add('hidden');$('viewForgotSent').classList.add('hidden');$('viewVerifySignup').classList.add('hidden');$('viewReset').classList.remove('hidden');return;
@@ -953,6 +955,8 @@ async function afterAuthCheck(session){
   setAuthUI(session.user);
   await caricaCrediti();
   $('creditPanel').classList.remove('hidden');
+  // arrivato dalla mappa per salvare un preferito: lo riporto lì
+  if(new URLSearchParams(location.search).get('torna')==='mappa') location.href='/mappa.html';
 }
 
 function setAuthUI(user){

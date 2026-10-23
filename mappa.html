@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mappa delle aste immobiliari in Italia — Analizzaste</title>
+  <meta name="description" content="Tutte le aste immobiliari giudiziarie d'Italia su una mappa, aggiornate ogni notte dal Portale delle Vendite Pubbliche. Filtra per prezzo, tipologia e data, poi analizza l'avviso di vendita." />
+  <link rel="canonical" href="https://analizzaste.it/mappa.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="it_IT" />
+  <meta property="og:site_name" content="Analizzaste" />
+  <meta property="og:url" content="https://analizzaste.it/mappa.html" />
+  <meta property="og:title" content="Mappa delle aste immobiliari in Italia — Analizzaste" />
+  <meta property="og:description" content="Tutte le aste immobiliari d'Italia su una mappa, aggiornate ogni notte dal PVP." />
+  <meta property="og:image" content="https://analizzaste.it/img/og-image.png?v=2" />
+  <link rel="icon" href="/img/favicon.svg?v=2" type="image/svg+xml" />
+  <link rel="icon" href="/img/favicon-32.png?v=2" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png?v=2" />
+  <meta name="theme-color" content="#0f1117" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css" />
+  <style>
+    :root {
+      --bg:#f8f9fc; --white:#ffffff; --ink:#0f1117; --ink-mid:#374151;
+      --ink-soft:#6b7280; --ink-xs:#9ca3af;
+      --blue:#2563eb; --blue-dark:#1d4ed8; --blue-pale:#eff6ff; --blue-mid:#dbeafe;
+      --green:#16a34a; --green-pale:#f0fdf4; --green-mid:#dcfce7;
+      --red:#dc2626; --red-pale:#fef2f2;
+      --yellow:#d97706; --yellow-pale:#fffbeb;
+      --violet:#7c3aed; --slate:#64748b;
+      --border:#e5e7eb; --border-mid:#d1d5db;
+      --r:12px; --r-sm:8px;
+      --sh:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+      --sh-sm:0 1px 3px rgba(0,0,0,.08);
+      --font:'Plus Jakarta Sans',system-ui,sans-serif;
+      --top:64px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+    a{color:var(--blue);text-decoration:none}
+    a:hover{text-decoration:underline}
+    button,input,select{font:inherit;color:inherit}
+
+    /* TOPBAR (come in index.html) */
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);box-shadow:var(--sh-sm);flex-shrink:0;z-index:1000}
+    .topbar-inner{padding:0 20px;height:var(--top);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .topbar-links{display:flex;align-items:center;gap:18px}
+    .topbar-links a{color:var(--ink-mid);font-size:14px;font-weight:500}
+    .topbar-links a:hover{color:var(--blue);text-decoration:none}
+    .topbar-cta{background:var(--blue)!important;color:white!important;padding:8px 18px;border-radius:8px;font-weight:700!important;white-space:nowrap}
+    .brand-img{height:56px;object-fit:contain;display:block;max-width:100%}
+    .topbar-cta:hover{background:var(--blue-dark)!important}
+
+    /* LAYOUT */
+    .app{flex:1;display:grid;grid-template-columns:360px 1fr;min-height:0}
+    .side{background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+    #map{min-height:0;background:#e8eef5}
+
+    .side-head{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+    .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);margin-bottom:4px}
+    .side-head h1{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+    .stats{display:flex;gap:10px;margin-top:12px}
+    .stat{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px}
+    .stat b{display:block;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+    .stat span{font-size:12px;color:var(--ink-soft)}
+
+    .filters{padding:14px 18px;border-bottom:1px solid var(--border);display:grid;gap:12px}
+    .f-lab{font-size:12px;font-weight:700;color:var(--ink-mid);margin-bottom:6px;display:block}
+    .f-in{width:100%;border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:8px 10px;background:var(--white);font-size:14px}
+    .f-in:focus{outline:2px solid var(--blue-mid);border-color:var(--blue)}
+    .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-mid);border-radius:100px;padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer;user-select:none;background:var(--white);color:var(--ink-soft)}
+    .chip input{display:none}
+    .chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+    .chip.on{background:var(--blue-pale);border-color:var(--blue-mid);color:var(--ink)}
+    .check{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+    .check input{accent-color:var(--blue);width:16px;height:16px}
+    .f-foot{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-soft)}
+    .linkbtn{background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;font-size:13px}
+
+    .list-head{padding:10px 18px;font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--bg)}
+    .list{overflow-y:auto;flex:1}
+    .item{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);padding:12px 18px;cursor:pointer}
+    .item:hover{background:var(--blue-pale)}
+    .item-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+    .item-prezzo{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+    .item-data{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+    .item-luogo{font-size:13px;color:var(--ink-mid);margin-top:2px}
+    .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;margin-top:6px;margin-right:4px}
+    .empty{padding:24px 18px;color:var(--ink-soft);font-size:14px}
+    .fonte{padding:10px 18px;font-size:12px;color:var(--ink-xs);border-top:1px solid var(--border)}
+
+    /* POPUP */
+    .leaflet-popup-content{margin:14px 16px;font-family:var(--font);font-size:13px;line-height:1.45;min-width:250px}
+    .pp-prezzo{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+    .pp-sub{color:var(--ink-soft);font-size:12px;margin-bottom:8px}
+    .pp-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0}
+    .pp-grid dt{color:var(--ink-soft)}
+    .pp-grid dd{font-weight:600}
+    .pp-desc{color:var(--ink-mid);margin:6px 0 10px;max-height:90px;overflow:auto}
+    .pp-nota{background:var(--yellow-pale);color:#92400e;border-radius:6px;padding:6px 8px;font-size:12px;margin-bottom:8px}
+    .pp-btns{display:grid;gap:6px}
+    .pp-btn{display:block;text-align:center;padding:8px 10px;border-radius:8px;font-weight:700;font-size:13px}
+    .pp-btn.pri{background:var(--blue);color:white!important}
+    .pp-btn.sec{border:1px solid var(--border-mid);color:var(--ink)!important}
+    .pp-btn:hover{text-decoration:none;opacity:.92}
+
+    /* CLUSTER */
+    .cl{background:rgba(37,99,235,.18);border-radius:50%}
+    .cl div{background:var(--blue);color:white;border-radius:50%;width:calc(100% - 8px);height:calc(100% - 8px);margin:4px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+
+    /* PREFERITI */
+    .stella{background:var(--white);border:1px solid var(--border-mid);border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;padding:7px 10px;color:var(--ink-mid);display:flex;align-items:center;justify-content:center;gap:6px}
+    .stella:hover{border-color:var(--yellow)}
+    .stella.on{background:var(--yellow-pale);border-color:#fcd34d;color:#92400e}
+    .item{position:relative;padding-right:44px}
+    .item-stella{position:absolute;right:14px;bottom:10px;background:none;border:none;font-size:18px;line-height:1;cursor:pointer;color:var(--border-mid);padding:4px}
+    .item-stella.on{color:#f59e0b}
+    .item-stella:hover{color:#f59e0b}
+    .item.concluso{opacity:.65;cursor:default}
+    .utente-top{font-size:13px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+    .avviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 18px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:var(--sh);max-width:calc(100% - 32px)}
+    .avviso a{color:#93c5fd;font-weight:700}
+
+    .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:500;background:rgba(248,249,252,.7);font-weight:700;color:var(--ink-mid)}
+    .map-wrap{position:relative;min-height:0}
+    .map-wrap #map{position:absolute;inset:0}
+    .toggle-filtri{display:none}
+
+    @media (max-width:820px){
+      :root{--top:56px}
+      .topbar-inner{padding:0 12px}
+      .topbar-links a:not(.topbar-cta){display:none}
+      .brand-img{height:38px}
+      .topbar-cta{padding:7px 12px!important;font-size:13px!important}
+      .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+      .side{border-right:none;border-bottom:1px solid var(--border);max-height:none}
+      .side .filters,.side .list-head,.side .list,.side .fonte{display:none}
+      .side.aperto .filters{display:grid}
+      .side.aperto .list-head{display:block}
+      .side.aperto .list{display:block;max-height:45vh}
+      .utente-top{display:none}
+      .side-head{padding:12px 16px}
+      .side-head h1{font-size:17px}
+      .toggle-filtri{display:inline-block;margin-top:10px}
+      .map-wrap{min-height:60vh}
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="/" class="brand" aria-label="Analizzaste, torna alla home">
+      <img class="brand-img" src="/img/brand-banner-final.png?v=1" alt="Analizzaste - Analisi Aste Immobiliari" />
+    </a>
+    <nav class="topbar-links">
+      <span class="utente-top" id="utenteTop"></span>
+      <a href="/#come-funziona">Come funziona</a>
+      <a href="/#inizia" class="topbar-cta">Analizza un avviso →</a>
+    </nav>
+  </div>
+</header>
+
+<main class="app">
+  <aside class="side" id="side">
+    <div class="side-head">
+      <div class="eyebrow">Mappa delle aste</div>
+      <h1>Aste immobiliari in Italia</h1>
+      <div class="stats">
+        <div class="stat"><b id="nTotali">…</b><span>aste in mappa</span></div>
+        <div class="stat"><b id="nZona">…</b><span>nella zona visibile</span></div>
+      </div>
+      <button class="linkbtn toggle-filtri" id="toggleFiltri" type="button">Filtri ▾</button>
+    </div>
+
+    <form class="filters" id="filtri" onsubmit="return false">
+      <div>
+        <label class="f-lab" for="fLuogo">Comune o provincia</label>
+        <input class="f-in" id="fLuogo" type="search" placeholder="es. Bologna" autocomplete="off" />
+      </div>
+      <div>
+        <span class="f-lab">Tipologia</span>
+        <div class="chips" id="fCategorie"></div>
+      </div>
+      <div class="f-row">
+        <div>
+          <label class="f-lab" for="fPrezzo">Prezzo base fino a</label>
+          <select class="f-in" id="fPrezzo">
+            <option value="">Qualsiasi</option>
+            <option value="25000">25.000 €</option>
+            <option value="50000">50.000 €</option>
+            <option value="100000">100.000 €</option>
+            <option value="150000">150.000 €</option>
+            <option value="250000">250.000 €</option>
+            <option value="500000">500.000 €</option>
+          </select>
+        </div>
+        <div>
+          <label class="f-lab" for="fGiorni">Asta entro</label>
+          <select class="f-in" id="fGiorni">
+            <option value="">Qualsiasi data</option>
+            <option value="15">15 giorni</option>
+            <option value="30">30 giorni</option>
+            <option value="60">60 giorni</option>
+            <option value="90">90 giorni</option>
+          </select>
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="fLibero" /> Solo immobili liberi</label>
+      <label class="check"><input type="checkbox" id="fPreferiti" /> ⭐ Solo i miei preferiti <span id="nPreferiti" style="color:var(--ink-soft)"></span></label>
+      <div class="f-foot">
+        <span id="nFiltrate"></span>
+        <button class="linkbtn" type="button" id="azzera">Azzera filtri</button>
+      </div>
+    </form>
+
+    <div class="list-head" id="titoloLista">Prossime aste nella zona</div>
+    <div class="list" id="lista"><div class="empty">Caricamento…</div></div>
+    <div class="fonte" id="fonte">Dati: Portale delle Vendite Pubbliche (Ministero della Giustizia).</div>
+  </aside>
+
+  <div class="map-wrap">
+    <div id="map" role="region" aria-label="Mappa delle aste"></div>
+    <div class="loading" id="loading">Carico le aste…</div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL='https://hvmnernovucnsksszsbe.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_5bBF51zEshWF3YtBh-YQoA_keV7WfCH';
+const SB_HEADERS={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY};
+// Stesso client di index.html: la sessione di login è condivisa su tutto il dominio
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const CATEGORIE={
+  R:{nome:'Residenziale',colore:'#2563eb'},
+  C:{nome:'Commerciale',colore:'#d97706'},
+  I:{nome:'Industriale',colore:'#7c3aed'},
+  A:{nome:'Altro',colore:'#64748b'},
+  S:{nome:'Sportivo',colore:'#16a34a'}
+};
+const DISPONIBILITA={
+  LIBER:{nome:'Libero',bg:'#f0fdf4',fg:'#16a34a'},
+  OCCUP:{nome:'Occupato',bg:'#fef2f2',fg:'#dc2626'},
+  OCCST:{nome:'Occupato senza titolo',bg:'#fef2f2',fg:'#dc2626'},
+  INCOR:{nome:'In corso di liberazione',bg:'#fffbeb',fg:'#d97706'}
+};
+// Ordine dei campi restituiti da aste_mappa()
+const I_ID=0,I_LAT=1,I_LNG=2,I_PREZZO=3,I_DATA=4,I_CAT=5,I_CITTA=6,I_PROV=7,I_GEO=8,I_DISP=9;
+
+const eur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const fmtPrezzo=v=>v>0?eur.format(v):'Prezzo n.d.';
+const fmtData=d=>{if(!d)return'';const[y,m,g]=d.split('-');return`${g}/${m}/${y}`};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Z0-9]+/g,' ').trim();
+const urlPvp=id=>'https://pvp.giustizia.it/pvp/it/detail_annuncio.page?idAnnuncio='+encodeURIComponent(id);
+
+let aste=[], markerPerId=new Map();
+
+const map=L.map('map',{preferCanvas:true,zoomControl:true}).setView([42.2,12.5],6);
+// Mappe di OpenStreetMap: gratuite, senza chiave, con l'obbligo di citarle.
+// Se il traffico cresce molto conviene un fornitore con chiave (MapTiler, Stadia).
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Dati <a href="https://pvp.giustizia.it/pvp/" target="_blank" rel="noopener">PVP</a>'
+}).addTo(map);
+
+const cluster=L.markerClusterGroup({
+  chunkedLoading:true,showCoverageOnHover:false,maxClusterRadius:55,spiderfyOnMaxZoom:true,
+  iconCreateFunction:c=>{
+    const n=c.getChildCount(),s=n<100?36:n<1000?44:52;
+    return L.divIcon({html:`<div>${n.toLocaleString('it-IT')}</div>`,className:'cl',iconSize:[s,s]});
+  }
+});
+map.addLayer(cluster);
+
+function creaMarker(a){
+  const cat=CATEGORIE[a[I_CAT]]||CATEGORIE.A;
+  const m=L.circleMarker([a[I_LAT],a[I_LNG]],{
+    radius:7,weight:2,color:'#fff',fillColor:cat.colore,fillOpacity:a[I_GEO]==='comune'?.55:.95
+  });
+  m.bindPopup(()=>popupBase(a),{maxWidth:320,autoPanPadding:[30,30]});
+  m.on('popupopen',()=>caricaDettaglio(a,m));
+  m._asta=a;
+  return m;
+}
+
+function tagDisp(cod){
+  const d=DISPONIBILITA[cod];
+  return d?`<span class="tag" style="background:${d.bg};color:${d.fg}">${d.nome}</span>`:'';
+}
+
+function popupBase(a,det){
+  const cat=CATEGORIE[a[I_CAT]]||CATEGORIE.A;
+  const luogo=[a[I_CITTA],a[I_PROV]&&a[I_PROV]!==a[I_CITTA]?a[I_PROV]:''].filter(Boolean).join(', ');
+  let h=`<div class="pp-prezzo">${fmtPrezzo(a[I_PREZZO])}</div>
+    <div class="pp-sub">Prezzo base · ${esc(cat.nome)} · ${esc(luogo)}</div>`;
+  if(a[I_GEO]==='comune') h+=`<div class="pp-nota">Posizione indicativa: il PVP non indica le coordinate, il punto è al centro del comune.</div>`;
+  h+=`<dl class="pp-grid"><dt>Data asta</dt><dd>${fmtData(a[I_DATA])}${det&&det.ora_vendita?' ore '+esc(det.ora_vendita):''}</dd>`;
+  if(det){
+    if(det.offerta_minima>0) h+=`<dt>Offerta minima</dt><dd>${fmtPrezzo(det.offerta_minima)}</dd>`;
+    if(det.via) h+=`<dt>Indirizzo</dt><dd>${esc(det.via)}</dd>`;
+    if(det.tribunale) h+=`<dt>Tribunale</dt><dd>${esc(String(det.tribunale).replace(/^Tribunale di /i,''))}</dd>`;
+    if(det.procedura) h+=`<dt>Procedura</dt><dd>n. ${esc(det.procedura)}${det.numero_lotto?' · '+esc(det.numero_lotto.toLowerCase()):''}</dd>`;
+  }
+  h+=`</dl>`;
+  if(a[I_DISP]) h+=tagDisp(a[I_DISP]);
+  if(det&&det.descrizione) h+=`<div class="pp-desc">${esc(det.descrizione)}</div>`;
+  else if(!det) h+=`<div class="pp-desc" style="color:var(--ink-xs)">Carico i dettagli…</div>`;
+  h+=`<div class="pp-btns">
+    ${bottoneStella(a[I_ID])}
+    <a class="pp-btn sec" href="${urlPvp(a[I_ID])}" target="_blank" rel="noopener">Apri la scheda sul PVP ↗</a>
+    <a class="pp-btn pri" href="/#inizia" title="Scarica l'avviso o la perizia dalla scheda PVP e caricali su Analizzaste">Analizza l'avviso con Analizzaste →</a>
+  </div>`;
+  return h;
+}
+
+/* ---------- preferiti ---------- */
+let utente=null;
+const preferiti=new Set();
+const URL_ACCEDI='/?accedi=1&torna=mappa';
+
+function bottoneStella(id){
+  const on=preferiti.has(id);
+  return `<button type="button" class="stella ${on?'on':''}" data-stella="${id}">${on?'★ Nei preferiti':'☆ Salva nei preferiti'}</button>`;
+}
+
+let tAvviso;
+function avviso(html){
+  let el=document.getElementById('avviso');
+  if(!el){el=document.createElement('div');el.id='avviso';el.className='avviso';el.setAttribute('role','status');document.body.appendChild(el);}
+  el.innerHTML=html; el.hidden=false;
+  clearTimeout(tAvviso); tAvviso=setTimeout(()=>{el.hidden=true},5000);
+}
+
+async function caricaUtente(){
+  const {data:{session}}=await sb.auth.getSession();
+  utente=session?session.user:null;
+  preferiti.clear();
+  if(utente){
+    const {data,error}=await sb.from('aste_preferite').select('asta_id').limit(1000);
+    if(!error) data.forEach(r=>preferiti.add(Number(r.asta_id)));
+    $('utenteTop').textContent=utente.email;
+  }else{
+    $('utenteTop').innerHTML=`<a href="${URL_ACCEDI}">Accedi</a>`;
+  }
+  aggiornaContoPreferiti();
+}
+
+function aggiornaContoPreferiti(){
+  $('nPreferiti').textContent=utente?`(${preferiti.size})`:'';
+}
+
+async function cambiaPreferito(id){
+  if(!utente){
+    avviso(`Per salvare le aste nei preferiti <a href="${URL_ACCEDI}">accedi o registrati</a>: è gratis.`);
+    return;
+  }
+  const era=preferiti.has(id);
+  era?preferiti.delete(id):preferiti.add(id);   // aggiorno subito lo schermo
+  ridisegnaStelle(id);
+  const {error}=era
+    ?await sb.from('aste_preferite').delete().eq('user_id',utente.id).eq('asta_id',id)
+    :await sb.from('aste_preferite').insert({user_id:utente.id,asta_id:id});
+  if(error&&error.code!=='23505'){                // 23505 = era già nei preferiti
+    era?preferiti.add(id):preferiti.delete(id);
+    ridisegnaStelle(id);
+    avviso(esc(/limite/i.test(error.message)?error.message:'Non sono riuscito a salvare il preferito, riprova.'));
+    return;
+  }
+  if($('fPreferiti').checked) applicaFiltri();
+}
+
+function ridisegnaStelle(id){
+  aggiornaContoPreferiti();
+  const on=preferiti.has(id);
+  document.querySelectorAll(`[data-stella="${id}"]`).forEach(b=>{
+    b.classList.toggle('on',on);
+    if(b.classList.contains('stella')) b.textContent=on?'★ Nei preferiti':'☆ Salva nei preferiti';
+    else {b.textContent=on?'★':'☆';b.title=on?'Togli dai preferiti':'Salva nei preferiti';}
+  });
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-stella]'); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  cambiaPreferito(Number(b.dataset.stella));
+});
+
+// Preferiti che non sono più sulla mappa (asta passata o tolta dal PVP)
+async function preferitiConclusi(){
+  const mancanti=[...preferiti].filter(id=>!markerPerId.has(id));
+  if(!mancanti.length) return [];
+  const {data}=await sb.from('aste_pvp').select('id,citta,provincia,prezzo_base,data_vendita,categoria,esito').in('id',mancanti);
+  return data||[];
+}
+
+const cacheDettagli=new Map();
+async function caricaDettaglio(a,m){
+  const id=a[I_ID];
+  let det=cacheDettagli.get(id);
+  if(!det){
+    try{
+      const r=await fetch(`${SUPABASE_URL}/rest/v1/aste_pvp?id=eq.${id}&select=via,tribunale,procedura,numero_lotto,offerta_minima,ora_vendita,descrizione`,{headers:SB_HEADERS});
+      det=(await r.json())[0]||{};
+      cacheDettagli.set(id,det);
+    }catch(e){det={};}
+  }
+  if(m.isPopupOpen()) m.setPopupContent(popupBase(a,det));
+}
+
+/* ---------- filtri ---------- */
+const $=id=>document.getElementById(id);
+const statoCat=new Set(Object.keys(CATEGORIE));
+
+function disegnaChip(){
+  $('fCategorie').innerHTML=Object.entries(CATEGORIE).map(([k,c])=>
+    `<label class="chip ${statoCat.has(k)?'on':''}" data-k="${k}"><input type="checkbox" ${statoCat.has(k)?'checked':''}/><i style="background:${c.colore}"></i>${c.nome}</label>`).join('');
+}
+$('fCategorie').addEventListener('click',e=>{
+  const ch=e.target.closest('.chip'); if(!ch) return; e.preventDefault();
+  const k=ch.dataset.k; statoCat.has(k)?statoCat.delete(k):statoCat.add(k);
+  disegnaChip(); applicaFiltri();
+});
+
+function passaFiltri(a){
+  if($('fPreferiti').checked) return preferiti.has(a[I_ID]); // i preferiti si vedono tutti, senza altri filtri
+  if(!statoCat.has(a[I_CAT])) return false;
+  const pmax=Number($('fPrezzo').value); if(pmax&&!(a[I_PREZZO]>0&&a[I_PREZZO]<=pmax)) return false;
+  const gg=Number($('fGiorni').value);
+  if(gg){const lim=new Date(Date.now()+gg*864e5).toISOString().slice(0,10); if(a[I_DATA]>lim) return false;}
+  if($('fLibero').checked&&a[I_DISP]!=='LIBER') return false;
+  const q=norm($('fLuogo').value);
+  if(q&&!(norm(a[I_CITTA]).startsWith(q)||norm(a[I_PROV]).startsWith(q))) return false;
+  return true;
+}
+
+let visibili=[];
+function applicaFiltri(zoom){
+  visibili=aste.filter(passaFiltri);
+  cluster.clearLayers();
+  cluster.addLayers(visibili.map(a=>markerPerId.get(a[I_ID])));
+  const soloPref=$('fPreferiti').checked;
+  $('nFiltrate').textContent=soloPref?`${visibili.length} preferiti in mappa`
+    :visibili.length===aste.length?'Nessun filtro attivo':`${visibili.length.toLocaleString('it-IT')} aste con questi filtri`;
+  if(zoom&&visibili.length&&($('fLuogo').value.trim()||soloPref)){
+    map.fitBounds(L.latLngBounds(visibili.map(a=>[a[I_LAT],a[I_LNG]])),{padding:[40,40],maxZoom:13});
+  }
+  aggiornaLista();
+}
+
+function voceLista(a){
+  const cat=CATEGORIE[a[I_CAT]]||CATEGORIE.A, on=preferiti.has(a[I_ID]);
+  return `<div class="item" role="button" tabindex="0" data-id="${a[I_ID]}">
+    <div class="item-top"><span class="item-prezzo">${fmtPrezzo(a[I_PREZZO])}</span><span class="item-data">${fmtData(a[I_DATA])}</span></div>
+    <div class="item-luogo">${esc(a[I_CITTA]||'')}${a[I_PROV]&&a[I_PROV]!==a[I_CITTA]?' ('+esc(a[I_PROV])+')':''}</div>
+    <span class="tag" style="background:${cat.colore}1a;color:${cat.colore}">${cat.nome}</span>${tagDisp(a[I_DISP])}
+    <button type="button" class="item-stella ${on?'on':''}" data-stella="${a[I_ID]}" title="${on?'Togli dai preferiti':'Salva nei preferiti'}">${on?'★':'☆'}</button>
+  </div>`;
+}
+
+function voceConclusa(r){
+  const esiti={SOSPE:'Asta sospesa',AGGIU:'Aggiudicata',ASDES:'Asta deserta'};
+  const stato=(r.data_vendita&&r.data_vendita<new Date().toISOString().slice(0,10))?'Asta già svolta':(esiti[r.esito]||'Non più sul PVP');
+  return `<div class="item concluso">
+    <div class="item-top"><span class="item-prezzo">${fmtPrezzo(r.prezzo_base)}</span><span class="item-data">${fmtData(r.data_vendita)}</span></div>
+    <div class="item-luogo">${esc(r.citta||'')}${r.provincia&&r.provincia!==r.citta?' ('+esc(r.provincia)+')':''} · <a href="${urlPvp(r.id)}" target="_blank" rel="noopener">scheda PVP ↗</a></div>
+    <span class="tag" style="background:#f1f5f9;color:#475569">${stato}</span>
+    <button type="button" class="item-stella on" data-stella="${r.id}" title="Togli dai preferiti">★</button>
+  </div>`;
+}
+
+let seqLista=0;
+async function aggiornaLista(){
+  const seq=++seqLista;
+  const b=map.getBounds(), soloPref=$('fPreferiti').checked;
+  // con i preferiti mostro tutto l'elenco, non solo la zona visibile
+  const inZona=soloPref?visibili:visibili.filter(a=>b.contains([a[I_LAT],a[I_LNG]]));
+  $('nZona').textContent=inZona.length.toLocaleString('it-IT');
+  $('titoloLista').textContent=soloPref?'I miei preferiti in asta':'Prossime aste nella zona';
+  const primi=soloPref?inZona:inZona.slice(0,60); // già ordinate per data
+  let html=primi.map(voceLista).join('');
+  if(!soloPref&&inZona.length>primi.length) html+=`<div class="empty">Altre ${(inZona.length-primi.length).toLocaleString('it-IT')} aste: avvicinati sulla mappa per vederle.</div>`;
+  if(soloPref){
+    const conclusi=await preferitiConclusi();
+    if(seq!==seqLista) return;
+    if(conclusi.length) html+=`<div class="list-head">Preferiti non più in asta</div>`+conclusi.map(voceConclusa).join('');
+    if(!html) html='<div class="empty">Non hai ancora aste nei preferiti. Apri un\'asta sulla mappa e premi ☆ per salvarla.</div>';
+  }
+  $('lista').innerHTML=html||'<div class="empty">Nessuna asta in questa zona con i filtri scelti.</div>';
+}
+$('lista').addEventListener('click',e=>{
+  if(e.target.closest('[data-stella]')) return; // la stella la gestisce cambiaPreferito
+  const it=e.target.closest('.item[data-id]'); if(!it) return;
+  const m=markerPerId.get(Number(it.dataset.id)); if(!m) return;
+  cluster.zoomToShowLayer(m,()=>m.openPopup());
+});
+
+$('lista').addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches('.item[data-id]')){e.preventDefault();e.target.click();}
+});
+
+let tLista; map.on('moveend',()=>{clearTimeout(tLista);tLista=setTimeout(aggiornaLista,120)});
+let tLuogo; $('fLuogo').addEventListener('input',()=>{clearTimeout(tLuogo);tLuogo=setTimeout(()=>applicaFiltri(true),300)});
+['fPrezzo','fGiorni','fLibero'].forEach(id=>$(id).addEventListener('change',()=>applicaFiltri()));
+$('fPreferiti').addEventListener('change',()=>{
+  if($('fPreferiti').checked&&!utente){
+    $('fPreferiti').checked=false;
+    avviso(`Per vedere i tuoi preferiti <a href="${URL_ACCEDI}">accedi o registrati</a>.`);
+    return;
+  }
+  applicaFiltri(true);
+});
+$('azzera').addEventListener('click',()=>{
+  $('fLuogo').value='';$('fPrezzo').value='';$('fGiorni').value='';$('fLibero').checked=false;$('fPreferiti').checked=false;
+  Object.keys(CATEGORIE).forEach(k=>statoCat.add(k)); disegnaChip(); applicaFiltri();
+  map.setView([42.2,12.5],6);
+});
+$('toggleFiltri').addEventListener('click',()=>{
+  const s=$('side');s.classList.toggle('aperto');
+  $('toggleFiltri').textContent=s.classList.contains('aperto')?'Chiudi filtri ▴':'Filtri ▾';
+  setTimeout(()=>map.invalidateSize(),50);
+});
+
+/* ---------- avvio ---------- */
+async function carica(){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/aste_mappa`,{method:'POST',headers:{...SB_HEADERS,'Content-Type':'application/json'},body:'{}'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    aste=d.aste||[];
+    aste.forEach(a=>markerPerId.set(a[I_ID],creaMarker(a)));
+    $('nTotali').textContent=aste.length.toLocaleString('it-IT');
+    if(d.aggiornato_al){
+      const dt=new Date(d.aggiornato_al);
+      $('fonte').innerHTML=`Dati: <a href="https://pvp.giustizia.it/pvp/" target="_blank" rel="noopener">Portale delle Vendite Pubbliche</a>, aggiornati il ${dt.toLocaleDateString('it-IT')} alle ${dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}. Verifica sempre i dati sulla scheda ufficiale.`;
+    }
+    try{await caricaUtente();}catch(e){/* senza login la mappa funziona lo stesso */}
+    const daAccount=new URLSearchParams(location.search).get('preferiti')==='1';
+    if(daAccount&&utente) $('fPreferiti').checked=true;
+    applicaFiltri(daAccount);
+  }catch(e){
+    $('lista').innerHTML='<div class="empty">Non riesco a caricare le aste in questo momento. Riprova tra poco.</div>';
+    $('nTotali').textContent='–';
+  }finally{
+    $('loading').remove();
+  }
+}
+disegnaChip();
+carica();
+</script>
+</body>
+</html>
