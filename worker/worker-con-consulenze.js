@@ -186,7 +186,7 @@ async function handleClaude(request, env) {
 
   const fingerprint = tipo === 'file' ? await improntaDocumento(bodyJson).catch(() => null) : null;
 
-  // 3) Amministratore? -> nessun controllo sui crediti
+  // 3) Amministratore? -> nessun controllo sui gettoni
   const profResp = await fetch(
     `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=is_admin,is_blocked`,
     { headers: sbHeaders(env) }
@@ -195,7 +195,7 @@ async function handleClaude(request, env) {
   const isAdmin = !!(profData && profData[0]?.is_admin);
   if (profData && profData[0]?.is_blocked) return jsonError('Account sospeso.', 403);
 
-  // 4) Scala il credito PRIMA della chiamata, in modo atomico
+  // 4) Scala il gettone PRIMA della chiamata, in modo atomico
   if (!isAdmin) {
     let scalato = false;
     try { scalato = await rpc(env, 'scala_credito', { p_user: userId, p_gratuita: gratuita }); }
@@ -203,7 +203,7 @@ async function handleClaude(request, env) {
     if (!scalato) {
       return gratuita
         ? jsonError('Carica e analizza prima un file per usare questa funzione.', 402)
-        : jsonError('Crediti esauriti. Ricarica per continuare.', 402);
+        : jsonError('Gettoni esauriti. Ricarica per continuare.', 402);
     }
   }
 
@@ -224,7 +224,7 @@ async function handleClaude(request, env) {
     response = null;
   }
 
-  // 6) Se Claude fallisce, restituiamo il credito
+  // 6) Se Claude fallisce, restituiamo il gettone
   if ((!response || !response.ok) && !isAdmin) {
     try { await rpc(env, 'rimborsa_credito', { p_user: userId, p_gratuita: gratuita }); } catch {}
   }
