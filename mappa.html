@@ -56,7 +56,7 @@
 
     /* LAYOUT */
     .app{flex:1;display:grid;grid-template-columns:360px 1fr;min-height:0}
-    .side{background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+    .side{background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;overflow-y:auto}
     #map{min-height:0;background:#e8eef5}
 
     .side-head{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
@@ -83,7 +83,7 @@
     .linkbtn{background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;font-size:13px}
 
     .list-head{padding:10px 18px;font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--bg)}
-    .list{overflow-y:auto;flex:1}
+    .list{overflow-y:auto;flex:1 0 260px}
     .item{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);padding:12px 18px;cursor:pointer}
     .item:hover{background:var(--blue-pale)}
     .item-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
@@ -126,6 +126,27 @@
     .avviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 18px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:var(--sh);max-width:calc(100% - 32px)}
     .avviso a{color:#93c5fd;font-weight:700}
 
+    /* AREA DI INTERESSE */
+    .area-box{padding:14px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--blue-pale),var(--white))}
+    .area-box:empty{display:none}
+    .area-tit{font-size:14px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+    .area-txt{font-size:13px;color:var(--ink-mid);margin-bottom:10px}
+    .area-txt b{color:var(--ink)}
+    .area-ok{font-size:13px;color:var(--green);font-weight:600;margin-bottom:10px}
+    .area-no{font-size:13px;color:#92400e;background:var(--yellow-pale);border-radius:8px;padding:8px 10px;margin-bottom:10px}
+    .area-btns{display:flex;flex-wrap:wrap;gap:8px}
+    .btn{border:1px solid var(--border-mid);background:var(--white);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink-mid)}
+    .btn:hover{border-color:var(--blue);color:var(--blue)}
+    .btn.pri{background:var(--blue);border-color:var(--blue);color:white}
+    .btn.pri:hover{background:var(--blue-dark);color:white}
+    .btn.del{color:var(--red)}
+    .btn:disabled{opacity:.6;cursor:wait}
+    .area-form{display:grid;gap:10px}
+    .area-form .check{font-size:13px;align-items:flex-start;line-height:1.4}
+    .area-form .check input{margin-top:2px;flex-shrink:0}
+    .area-hint{font-size:12px;color:var(--ink-soft)}
+    .leaflet-container.scegli-centro{cursor:crosshair}
+
     .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:500;background:rgba(248,249,252,.7);font-weight:700;color:var(--ink-mid)}
     .map-wrap{position:relative;min-height:0}
     .map-wrap #map{position:absolute;inset:0}
@@ -138,9 +159,11 @@
       .brand-img{height:38px}
       .topbar-cta{padding:7px 12px!important;font-size:13px!important}
       .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-      .side{border-right:none;border-bottom:1px solid var(--border);max-height:none}
+      .side{border-right:none;border-bottom:1px solid var(--border);max-height:none;overflow:visible}
       .side .filters,.side .list-head,.side .list,.side .fonte{display:none}
       .side.aperto .filters{display:grid}
+      .side .area-box{display:none}
+      .side.aperto .area-box:not(:empty){display:block}
       .side.aperto .list-head{display:block}
       .side.aperto .list{display:block;max-height:45vh}
       .utente-top{display:none}
@@ -175,7 +198,7 @@
         <div class="stat"><b id="nTotali">…</b><span>aste in mappa</span></div>
         <div class="stat"><b id="nZona">…</b><span>nella zona visibile</span></div>
       </div>
-      <button class="linkbtn toggle-filtri" id="toggleFiltri" type="button">Filtri ▾</button>
+      <button class="linkbtn toggle-filtri" id="toggleFiltri" type="button">Filtri e area ▾</button>
     </div>
 
     <form class="filters" id="filtri" onsubmit="return false">
@@ -218,6 +241,8 @@
         <button class="linkbtn" type="button" id="azzera">Azzera filtri</button>
       </div>
     </form>
+
+    <section class="area-box" id="areaBox" aria-live="polite"></section>
 
     <div class="list-head" id="titoloLista">Prossime aste nella zona</div>
     <div class="list" id="lista"><div class="empty">Caricamento…</div></div>
@@ -266,6 +291,8 @@ const urlPvp=id=>'https://pvp.giustizia.it/pvp/it/detail_annuncio.page?idAnnunci
 let aste=[], markerPerId=new Map();
 
 const map=L.map('map',{preferCanvas:true,zoomControl:true}).setView([42.2,12.5],6);
+// La mappa si ricalcola quando cambia il suo riquadro, non solo la finestra
+if(window.ResizeObserver) new ResizeObserver(()=>map.invalidateSize()).observe(document.getElementById('map'));
 // Mappe di OpenStreetMap: gratuite, senza chiave, con l'obbligo di citarle.
 // Se il traffico cresce molto conviene un fornitore con chiave (MapTiler, Stadia).
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
@@ -273,8 +300,9 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Dati <a href="https://pvp.giustizia.it/pvp/" target="_blank" rel="noopener">PVP</a>'
 }).addTo(map);
 
+let clusterPronto=false; // false mentre i marker entrano a blocchi
 const cluster=L.markerClusterGroup({
-  chunkedLoading:true,showCoverageOnHover:false,maxClusterRadius:55,spiderfyOnMaxZoom:true,
+  chunkedLoading:true,chunkProgress:(fatti,totale)=>{clusterPronto=fatti>=totale;},showCoverageOnHover:false,maxClusterRadius:55,spiderfyOnMaxZoom:true,
   iconCreateFunction:c=>{
     const n=c.getChildCount(),s=n<100?36:n<1000?44:52;
     return L.divIcon({html:`<div>${n.toLocaleString('it-IT')}</div>`,className:'cl',iconSize:[s,s]});
@@ -428,7 +456,7 @@ function disegnaChip(){
 $('fCategorie').addEventListener('click',e=>{
   const ch=e.target.closest('.chip'); if(!ch) return; e.preventDefault();
   const k=ch.dataset.k; statoCat.has(k)?statoCat.delete(k):statoCat.add(k);
-  disegnaChip(); applicaFiltri();
+  disegnaChip(); applicaFiltri(); filtriInArea();
 });
 
 function passaFiltri(a){
@@ -447,6 +475,7 @@ let visibili=[];
 function applicaFiltri(zoom){
   visibili=aste.filter(passaFiltri);
   cluster.clearLayers();
+  clusterPronto=false;
   cluster.addLayers(visibili.map(a=>markerPerId.get(a[I_ID])));
   const soloPref=$('fPreferiti').checked;
   $('nFiltrate').textContent=soloPref?`${visibili.length} preferiti in mappa`
@@ -500,17 +529,23 @@ async function aggiornaLista(){
 $('lista').addEventListener('click',e=>{
   if(e.target.closest('[data-stella]')) return; // la stella la gestisce cambiaPreferito
   const it=e.target.closest('.item[data-id]'); if(!it) return;
-  const m=markerPerId.get(Number(it.dataset.id)); if(!m) return;
-  cluster.zoomToShowLayer(m,()=>m.openPopup());
+  apriAsta(markerPerId.get(Number(it.dataset.id)));
 });
 
 $('lista').addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ')&&e.target.matches('.item[data-id]')){e.preventDefault();e.target.click();}
 });
 
+// I marker entrano nel cluster a blocchi (chunkedLoading): aspetto che quello cercato ci sia
+function apriAsta(m,tentativi=150){
+  if(!m) return;
+  if(clusterPronto&&m.__parent) cluster.zoomToShowLayer(m,()=>m.openPopup());
+  else if(tentativi>0) setTimeout(()=>apriAsta(m,tentativi-1),100);
+}
+
 let tLista; map.on('moveend',()=>{clearTimeout(tLista);tLista=setTimeout(aggiornaLista,120)});
 let tLuogo; $('fLuogo').addEventListener('input',()=>{clearTimeout(tLuogo);tLuogo=setTimeout(()=>applicaFiltri(true),300)});
-['fPrezzo','fGiorni','fLibero'].forEach(id=>$(id).addEventListener('change',()=>applicaFiltri()));
+['fPrezzo','fGiorni','fLibero'].forEach(id=>$(id).addEventListener('change',()=>{applicaFiltri();filtriInArea();}));
 $('fPreferiti').addEventListener('change',()=>{
   if($('fPreferiti').checked&&!utente){
     $('fPreferiti').checked=false;
@@ -526,9 +561,182 @@ $('azzera').addEventListener('click',()=>{
 });
 $('toggleFiltri').addEventListener('click',()=>{
   const s=$('side');s.classList.toggle('aperto');
-  $('toggleFiltri').textContent=s.classList.contains('aperto')?'Chiudi filtri ▴':'Filtri ▾';
+  $('toggleFiltri').textContent=s.classList.contains('aperto')?'Chiudi ▴':'Filtri e area ▾';
   setTimeout(()=>map.invalidateSize(),50);
 });
+
+/* ---------- area di interesse (email del sabato) ---------- */
+const RAGGI=[5,10,20,30,50,75,100];
+let area=null, iscrittoNewsletter=false, modificaArea=null, cerchioArea=null;
+
+async function caricaArea(){
+  area=null; iscrittoNewsletter=false;
+  if(utente){
+    const [ra,rn]=await Promise.all([
+      sb.from('aree_interesse').select('nome,lat,lng,raggio_km,categorie,prezzo_max').maybeSingle(),
+      sb.rpc('stato_newsletter')
+    ]);
+    if(!ra.error) area=ra.data;
+    if(!rn.error) iscrittoNewsletter=!!rn.data;
+  }
+  disegnaArea();
+}
+
+function asteNellArea(a0){
+  if(!a0) return 0;
+  const c=L.latLng(a0.lat,a0.lng), r=a0.raggio_km*1000, cats=new Set(a0.categorie||[]);
+  return aste.filter(a=>cats.has(a[I_CAT])&&(!a0.prezzo_max||(a[I_PREZZO]>0&&a[I_PREZZO]<=a0.prezzo_max))
+    &&c.distanceTo([a[I_LAT],a[I_LNG]])<=r).length;
+}
+
+function descriviFiltri(a0){
+  const cats=(a0.categorie||[]).length===Object.keys(CATEGORIE).length?'tutte le tipologie'
+    :(a0.categorie||[]).map(k=>(CATEGORIE[k]||{}).nome).filter(Boolean).join(', ').toLowerCase();
+  return cats+(a0.prezzo_max?`, prezzo base fino a ${fmtPrezzo(a0.prezzo_max)}`:'');
+}
+
+function disegnaCerchio(){
+  const a0=modificaArea||area;
+  if(!a0){ if(cerchioArea){map.removeLayer(cerchioArea);cerchioArea=null;} return; }
+  const stile={radius:a0.raggio_km*1000,color:'#2563eb',weight:2,dashArray:modificaArea?null:'6 6',
+    fillColor:'#2563eb',fillOpacity:modificaArea?.10:.04,interactive:false};
+  if(!cerchioArea) cerchioArea=L.circle([a0.lat,a0.lng],stile).addTo(map);
+  else{cerchioArea.setLatLng([a0.lat,a0.lng]);cerchioArea.setStyle(stile);cerchioArea.setRadius(stile.radius);}
+}
+
+function disegnaArea(){
+  const box=$('areaBox');
+  disegnaCerchio();
+  if(modificaArea){
+    const a0=modificaArea;
+    box.innerHTML=`<div class="area-tit">📍 ${area?'Modifica':'Scegli'} la tua area</div>
+      <form class="area-form" id="formArea">
+        <div class="area-hint">Clicca sulla mappa per spostare il centro del cerchio.</div>
+        <div class="f-row">
+          <div><label class="f-lab" for="aNome">Nome (facoltativo)</label>
+            <input class="f-in" id="aNome" maxlength="80" placeholder="es. Bologna e dintorni" value="${esc(a0.nome||'')}" /></div>
+          <div><label class="f-lab" for="aRaggio">Raggio</label>
+            <select class="f-in" id="aRaggio">${RAGGI.map(r=>`<option value="${r}" ${r===a0.raggio_km?'selected':''}>${r} km</option>`).join('')}</select></div>
+        </div>
+        <div class="area-txt">Ti segnalerò le aste con <b>${esc(descriviFiltri(a0))}</b>: sono i filtri scelti qui sopra. Oggi in quest'area ce ne sono <b>${asteNellArea(a0).toLocaleString('it-IT')}</b>.</div>
+        ${iscrittoNewsletter?'':`<label class="check"><input type="checkbox" id="aNewsletter" checked />
+          <span>Iscrivimi alla newsletter di Analizzaste e mandami <b>ogni sabato alle 9</b> le aste nuove e in arrivo in quest'area. Posso disiscrivermi in ogni momento dal link nell'email.</span></label>`}
+        <div class="area-btns">
+          <button class="btn pri" type="submit" id="aSalva">Salva l'area</button>
+          <button class="btn" type="button" id="aAnnulla">Annulla</button>
+        </div>
+      </form>`;
+    $('aRaggio').addEventListener('change',e=>{modificaArea.raggio_km=Number(e.target.value);disegnaArea();adattaAlCerchio();});
+    $('aNome').addEventListener('input',e=>{modificaArea.nome=e.target.value;});
+    $('aAnnulla').addEventListener('click',()=>{fineModifica();});
+    $('formArea').addEventListener('submit',e=>{e.preventDefault();salvaArea();});
+    return;
+  }
+  if(!utente){
+    box.innerHTML=`<div class="area-tit">📍 La tua area di interesse</div>
+      <div class="area-txt">Scegli una zona e ricevi <b>ogni sabato alle 9</b> un'email con le aste nuove e in arrivo.</div>
+      <div class="area-btns"><a class="btn pri" href="${URL_ACCEDI}">Accedi per sceglierla</a></div>`;
+    return;
+  }
+  if(!area){
+    box.innerHTML=`<div class="area-tit">📍 La tua area di interesse</div>
+      <div class="area-txt">Scegli una zona e ricevi <b>ogni sabato alle 9</b> un'email con le aste nuove e in arrivo.</div>
+      <div class="area-btns"><button class="btn pri" type="button" id="aNuova">Scegli la tua area</button></div>`;
+    $('aNuova').addEventListener('click',()=>iniziaModifica());
+    return;
+  }
+  box.innerHTML=`<div class="area-tit">📍 ${esc(area.nome||'La tua area')}</div>
+    <div class="area-txt">Raggio di <b>${area.raggio_km} km</b> · ${esc(descriviFiltri(area))}. Oggi ci sono <b>${asteNellArea(area).toLocaleString('it-IT')}</b> aste.</div>
+    ${iscrittoNewsletter
+      ?`<div class="area-ok">✓ Ricevi l'email ogni sabato alle 9</div>`
+      :`<div class="area-no">Non sei iscritto alla newsletter: non ricevi l'email del sabato. <button class="linkbtn" type="button" id="aIscrivi">Iscrivimi</button></div>`}
+    <div class="area-btns">
+      <button class="btn" type="button" id="aVedi">Vedi sulla mappa</button>
+      <button class="btn" type="button" id="aModifica">Modifica</button>
+      <button class="btn del" type="button" id="aElimina">Elimina</button>
+    </div>`;
+  $('aVedi').addEventListener('click',adattaAlCerchio);
+  $('aModifica').addEventListener('click',()=>iniziaModifica());
+  $('aElimina').addEventListener('click',eliminaArea);
+  if($('aIscrivi')) $('aIscrivi').addEventListener('click',async e=>{
+    e.target.disabled=true;
+    if(await iscrivimi()) disegnaArea(); else e.target.disabled=false;
+  });
+}
+
+function adattaAlCerchio(){ if(cerchioArea) map.fitBounds(cerchioArea.getBounds(),{padding:[30,30]}); }
+
+function iniziaModifica(){
+  if(!utente){avviso(`Per scegliere la tua area <a href="${URL_ACCEDI}">accedi o registrati</a>.`);return;}
+  const c=area?{lat:area.lat,lng:area.lng}:map.getCenter();
+  const zoomItalia=map.getZoom()<8;
+  modificaArea={
+    nome:area?area.nome:($('fLuogo').value.trim()||''),
+    lat:c.lat,lng:c.lng,raggio_km:area?area.raggio_km:20,
+    // i filtri della sidebar diventano i filtri dell'area
+    categorie:[...statoCat],prezzo_max:Number($('fPrezzo').value)||null
+  };
+  map.getContainer().classList.add('scegli-centro');
+  disegnaArea();
+  if(area||!zoomItalia) adattaAlCerchio();
+  else avviso('Clicca sulla mappa nel punto che ti interessa: il cerchio si sposterà lì.');
+}
+
+function fineModifica(){
+  modificaArea=null;
+  map.getContainer().classList.remove('scegli-centro');
+  disegnaArea();
+}
+
+map.on('click',e=>{
+  if(!modificaArea) return;
+  modificaArea.lat=e.latlng.lat; modificaArea.lng=e.latlng.lng;
+  disegnaArea();
+});
+// Se cambio i filtri mentre scelgo l'area, l'area li segue
+function filtriInArea(){
+  if(!modificaArea) return;
+  modificaArea.categorie=[...statoCat]; modificaArea.prezzo_max=Number($('fPrezzo').value)||null;
+  disegnaArea();
+}
+
+async function iscrivimi(){
+  const {data,error}=await sb.rpc('iscrivimi_newsletter');
+  if(error||!data){
+    avviso(data===false?'Conferma prima la tua email di registrazione, poi riprova.':'Non sono riuscito a iscriverti, riprova tra poco.');
+    return false;
+  }
+  iscrittoNewsletter=true;
+  return true;
+}
+
+async function salvaArea(){
+  const a0=modificaArea;
+  if(!a0.categorie.length){avviso('Scegli almeno una tipologia di immobile nei filtri.');return;}
+  $('aSalva').disabled=true;
+  const vuoleNewsletter=$('aNewsletter')&&$('aNewsletter').checked;
+  const {data,error}=await sb.from('aree_interesse').upsert({
+    user_id:utente.id,nome:(a0.nome||'').trim().slice(0,80)||null,
+    lat:a0.lat,lng:a0.lng,raggio_km:a0.raggio_km,categorie:a0.categorie,prezzo_max:a0.prezzo_max,
+    updated_at:new Date().toISOString()
+  },{onConflict:'user_id'}).select('nome,lat,lng,raggio_km,categorie,prezzo_max').single();
+  if(error){
+    $('aSalva').disabled=false;
+    avviso(/check/i.test(error.message)?'Il centro deve essere in Italia.':'Non sono riuscito a salvare l\'area, riprova.');
+    return;
+  }
+  area=data;
+  if(vuoleNewsletter) await iscrivimi();
+  fineModifica();
+  avviso(iscrittoNewsletter?'Area salvata: sabato alle 9 riceverai le aste di questa zona.':'Area salvata.');
+}
+
+async function eliminaArea(){
+  if(!confirm('Eliminare la tua area di interesse? Non riceverai più l\'email del sabato.')) return;
+  const {error}=await sb.from('aree_interesse').delete().eq('user_id',utente.id);
+  if(error){avviso('Non sono riuscito a eliminare l\'area, riprova.');return;}
+  area=null; disegnaArea();
+}
 
 /* ---------- avvio ---------- */
 async function carica(){
@@ -544,9 +752,20 @@ async function carica(){
       $('fonte').innerHTML=`Dati: <a href="https://pvp.giustizia.it/pvp/" target="_blank" rel="noopener">Portale delle Vendite Pubbliche</a>, aggiornati il ${dt.toLocaleDateString('it-IT')} alle ${dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}. Verifica sempre i dati sulla scheda ufficiale.`;
     }
     try{await caricaUtente();}catch(e){/* senza login la mappa funziona lo stesso */}
-    const daAccount=new URLSearchParams(location.search).get('preferiti')==='1';
+    try{await caricaArea();}catch(e){disegnaArea();}
+    const qs=new URLSearchParams(location.search);
+    const daAccount=qs.get('preferiti')==='1';
     if(daAccount&&utente) $('fPreferiti').checked=true;
     applicaFiltri(daAccount);
+    try{
+      // dall'email del sabato: ?area=1 mostra l'area, ?asta=ID apre quell'asta
+      if(qs.get('area')==='1'){
+        if(area) adattaAlCerchio(); else if(utente) iniziaModifica();
+        else avviso(`Per vedere la tua area <a href="${URL_ACCEDI}">accedi</a>.`);
+        if(innerWidth<=820) $('toggleFiltri').click();
+      }
+      apriAsta(markerPerId.get(Number(qs.get('asta'))));
+    }catch(e){/* un link sbagliato non deve rompere la mappa */}
   }catch(e){
     $('lista').innerHTML='<div class="empty">Non riesco a caricare le aste in questo momento. Riprova tra poco.</div>';
     $('nTotali').textContent='–';

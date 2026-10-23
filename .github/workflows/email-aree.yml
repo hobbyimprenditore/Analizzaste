@@ -1,0 +1,45 @@
+name: Email aste del sabato
+
+# Ogni sabato alle 9 (ora italiana) manda agli iscritti alla newsletter con un'area di interesse
+# le aste nuove e in arrivo nella loro zona. I due orari UTC coprono ora legale e solare:
+# lo script invia solo dalle 9 in poi e una volta sola per sabato.
+on:
+  schedule:
+    - cron: '0 7 * * 6'   # 09:00 con l'ora legale
+    - cron: '0 8 * * 6'   # 09:00 con l'ora solare
+  workflow_dispatch:
+    inputs:
+      forza:
+        description: 'Invia subito anche se non è sabato (chi ha già ricevuto oggi viene saltato)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: email-aree
+  cancel-in-progress: false
+
+jobs:
+  invia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Invia le email della settimana
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_MITTENTE: ${{ vars.EMAIL_MITTENTE }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] || [ -z "$RESEND_API_KEY" ]; then
+            echo "Mancano i secret SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY o RESEND_API_KEY"
+            exit 1
+          fi
+          if [ "${{ github.event.inputs.forza }}" = "true" ]; then
+            python scripts/email_aree_settimanali.py --forza
+          else
+            python scripts/email_aree_settimanali.py
+          fi

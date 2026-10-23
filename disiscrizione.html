@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disiscrizione dalla newsletter — Analizzaste</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/img/favicon.svg?v=2" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#f8f9fc;--white:#fff;--ink:#0f1117;--ink-mid:#374151;--ink-soft:#6b7280;--blue:#2563eb;--blue-dark:#1d4ed8;
+      --green:#16a34a;--red:#dc2626;--border:#e5e7eb;--font:'Plus Jakarta Sans',system-ui,sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;line-height:1.6}
+    .card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px 28px;max-width:460px;width:100%;box-shadow:0 4px 16px rgba(0,0,0,.08);text-align:center}
+    img{height:56px;margin-bottom:18px}
+    h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+    p{color:var(--ink-mid);font-size:15px;margin-bottom:20px}
+    button,.link{display:inline-block;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:12px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}
+    button:hover,.link:hover{background:var(--blue-dark)}
+    button:disabled{opacity:.6;cursor:wait}
+    .sec{background:none;color:var(--blue);padding:8px;font-weight:600}
+    .sec:hover{background:none;text-decoration:underline}
+    .ok{color:var(--green)}.err{color:var(--red)}
+  </style>
+</head>
+<body>
+  <main class="card" id="card">
+    <a href="/"><img src="/img/brand-banner-final.png?v=1" alt="Analizzaste" /></a>
+    <h1>Vuoi disiscriverti dalla newsletter?</h1>
+    <p>Non riceverai più l'email del sabato con le aste della tua area, né le altre comunicazioni della newsletter.</p>
+    <button type="button" id="conferma">Sì, disiscrivimi</button>
+    <div><a class="link sec" href="/mappa.html?area=1">No, voglio solo modificare la mia area</a></div>
+  </main>
+<script>
+const SUPABASE_URL='https://hvmnernovucnsksszsbe.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_5bBF51zEshWF3YtBh-YQoA_keV7WfCH';
+const token=new URLSearchParams(location.search).get('t')||'';
+const card=document.getElementById('card');
+
+function esito(titolo,testo,classe){
+  card.innerHTML=`<a href="/"><img src="/img/brand-banner-final.png?v=1" alt="Analizzaste" /></a>
+    <h1 class="${classe}">${titolo}</h1><p>${testo}</p><a class="link" href="/">Torna al sito</a>`;
+}
+
+if(!/^[0-9a-f-]{36}$/i.test(token)){
+  esito('Link non valido','Il link di disiscrizione è incompleto. Aprilo di nuovo dall\'email oppure scrivi a <a href="mailto:analizzaste@gmail.com">analizzaste@gmail.com</a>.','err');
+}else{
+  document.getElementById('conferma').addEventListener('click',async e=>{
+    e.target.disabled=true;
+    try{
+      const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/disiscrivi_newsletter`,{method:'POST',
+        headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({p_token:token})});
+      const ok=r.ok&&await r.json();
+      if(ok) esito('Disiscrizione completata','Non riceverai più la newsletter. Se cambi idea puoi iscriverti di nuovo dalla mappa, nella sezione "La tua area di interesse".','ok');
+      else esito('Link non più valido','Forse hai eliminato la tua area di interesse. Per disiscriverti scrivi a <a href="mailto:analizzaste@gmail.com">analizzaste@gmail.com</a>.','err');
+    }catch(err){
+      e.target.disabled=false;
+      alert('Non riesco a completare la disiscrizione in questo momento, riprova tra poco.');
+    }
+  });
+}
+</script>
+</body>
+</html>
