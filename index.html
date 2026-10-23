@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <!-- iubenda Privacy Controls and Cookie Solution (banner cookie e consenso) -->
+  <script type="text/javascript">
+  var _iub = _iub || [];
+  _iub.csConfiguration = {"siteId":4704994,"cookiePolicyId":19835445,"storage":{"useSiteId":true},
+    "callback":{"onPreferenceExpressedOrNotNeeded":function(p){
+      // Google Analytics solo con consenso alla finalità "Misurazione" (4)
+      if(p && (p.consent===true || (p.purposes && p.purposes["4"]===true))){
+        window.__gaConsenso=true; if(window.caricaAnalytics) window.caricaAnalytics();
+      }
+    }}};
+  _iub.csLangConfiguration = {"it":{"cookiePolicyId":19835445}};
+  </script>
+  <script type="text/javascript" src="//cdn.iubenda.com/cs/iubenda_cs.js" charset="UTF-8" async></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analizzaste — Analisi Avvisi di Vendita Immobiliare</title>
@@ -518,7 +531,7 @@
           window.switchTab=function(name,elem){gtag('event','tab_view',{'tab_name':name,'report_section':name});originalSwitchTab(name,elem);};
         }
       };
-      if(leggiConsenso()==='granted')window.caricaAnalytics();
+      if(window.__gaConsenso)window.caricaAnalytics();
     })();
   </script>
 </head>
@@ -601,7 +614,7 @@
         <div class="m-field"><label for="regPassword">Password</label><input type="password" id="regPassword" required minlength="6"></div>
         <div class="m-field" style="display:flex;align-items:flex-start;gap:8px">
           <input type="checkbox" id="regTerms" required style="width:auto;margin-top:3px">
-          <label for="regTerms" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Dichiaro di aver letto e accettato i <a href="/termini.html" target="_blank">Termini e Condizioni</a> e la <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>, incluso il disclaimer sui contenuti generati da intelligenza artificiale</label>
+          <label for="regTerms" style="font-weight:500;font-size:13px;line-height:1.4;margin:0">Dichiaro di aver letto e accettato i <a href="/termini.html" target="_blank">Termini e Condizioni</a> e la <a href="https://www.iubenda.com/privacy-policy/19835445" target="_blank" rel="noopener">Privacy Policy</a>, incluso il disclaimer sui contenuti generati da intelligenza artificiale</label>
         </div>
         <div class="m-field" style="display:flex;align-items:flex-start;gap:8px">
           <input type="checkbox" id="regNewsletter" style="width:auto;margin-top:3px">
@@ -765,8 +778,8 @@
     <a href="#contattaci" title="Contattaci"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
   </div>
   <p class="ft-disc">⚠️ I report sono generati tramite intelligenza artificiale a scopo puramente informativo e non costituiscono consulenza legale professionale ai sensi della L. 247/2012. L'utente è tenuto a verificare le informazioni con un professionista abilitato prima di prendere decisioni. Il Titolare non è responsabile per eventuali imprecisioni nei contenuti generati.</p>
-  <p class="ft-legal" style="font-size:12px;margin-top:10px"><a href="/privacy.html" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Privacy Policy</a> · <a href="/privacy.html" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Cookie Policy</a> · <a href="/termini.html" style="color:rgba(255,255,255,.6)">Termini e Condizioni</a></p>
-  <button class="ck-link" type="button" onclick="mostraBannerCookie()">Preferenze cookie</button>
+  <p class="ft-legal" style="font-size:12px;margin-top:10px"><a href="https://www.iubenda.com/privacy-policy/19835445" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Privacy Policy</a> · <a href="https://www.iubenda.com/privacy-policy/19835445/cookie-policy" target="_blank" rel="noopener" style="color:rgba(255,255,255,.6)">Cookie Policy</a> · <a href="/termini.html" style="color:rgba(255,255,255,.6)">Termini e Condizioni</a></p>
+  <button class="ck-link" type="button" onclick="if(window._iub&&_iub.cs&&_iub.cs.api)_iub.cs.api.openPreferences();">Preferenze cookie</button>
   <span id="adminGear" class="hidden" onclick="openAdminPanel()" style="display:inline-block;margin-top:14px;font-size:13px;color:rgba(255,255,255,.25);cursor:pointer;">⚙</span>
 </footer>
 
@@ -874,7 +887,7 @@
 
       <!-- CONSENSO -->
       <div style="background:var(--blue-pale);border:1px solid var(--blue-mid);border-radius:var(--r-sm);padding:12px 14px;margin:16px 0;font-size:12px;color:var(--ink-mid)">
-        Accetti i nostri <a href="/termini.html" target="_blank" style="color:var(--blue);font-weight:600">Termini</a> e la <a href="/privacy.html" target="_blank" style="color:var(--blue);font-weight:600">Privacy</a>.
+        Accetti i nostri <a href="/termini.html" target="_blank" style="color:var(--blue);font-weight:600">Termini</a> e la <a href="https://www.iubenda.com/privacy-policy/19835445" target="_blank" style="color:var(--blue);font-weight:600">Privacy</a>.
       </div>
 
       <button class="m-submit" type="submit" style="background:linear-gradient(135deg,#16a34a,#15803d)">📧 Invia e ricevi maggiori informazioni</button>
@@ -1462,29 +1475,6 @@ if(document.readyState==='loading'){
   initVideoIntro();
 }
 caricaManutenzione();
-</script>
-<div class="ck-banner hidden" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
-  <p><strong>🍪 Questo sito usa i cookie.</strong> Usiamo cookie tecnici, necessari al funzionamento (ad esempio per il login), e, solo con il tuo consenso, cookie di statistica di Google Analytics per capire come viene usato il sito. Puoi cambiare idea in qualsiasi momento dal link "Preferenze cookie" in fondo alla pagina. Dettagli nella <a href="/privacy.html" target="_blank" rel="noopener">Cookie Policy</a>.</p>
-  <div class="ck-btns">
-    <button type="button" class="ck-rej" onclick="sceltaCookie(false)">Rifiuta</button>
-    <button type="button" class="ck-acc" onclick="sceltaCookie(true)">Accetta</button>
-  </div>
-</div>
-<script>
-  function mostraBannerCookie(){document.getElementById('cookieBanner').classList.remove('hidden');}
-  function sceltaCookie(ok){
-    try{localStorage.setItem('cookie_consent',ok?'granted':'denied');}catch(e){}
-    document.getElementById('cookieBanner').classList.add('hidden');
-    if(ok){window.caricaAnalytics();}
-    else if(window.__gaLoaded){
-      // Revoca: cancella i cookie di Analytics e ricarica la pagina senza tracciamento
-      document.cookie.split(';').map(function(c){return c.split('=')[0].trim();}).filter(function(n){return /^_ga/.test(n);}).forEach(function(n){
-        document.cookie=n+'=; Max-Age=0; path=/; domain=.analizzaste.it';document.cookie=n+'=; Max-Age=0; path=/';
-      });
-      location.reload();
-    }
-  }
-  (function(){var c=null;try{c=localStorage.getItem('cookie_consent');}catch(e){}if(c!=='granted'&&c!=='denied')mostraBannerCookie();})();
 </script>
 </body>
 </html>
