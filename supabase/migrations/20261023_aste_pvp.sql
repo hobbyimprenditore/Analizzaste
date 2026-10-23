@@ -40,6 +40,8 @@ create policy "aste pvp leggibili da tutti" on public.aste_pvp
   using (true);
 
 grant select on public.aste_pvp to anon, authenticated;
+-- Su questo progetto service_role non riceve permessi automatici: lo script notturno ne ha bisogno.
+grant select, insert, update on public.aste_pvp to service_role;
 
 -- Cache della geocodifica (Nominatim) per gli annunci senza coordinate.
 -- Accessibile solo al service role.
@@ -52,6 +54,7 @@ create table if not exists public.geocodifiche (
 );
 
 alter table public.geocodifiche enable row level security;
+grant select, insert, update on public.geocodifiche to service_role;
 
 -- Dati compatti per la mappa, in una sola chiamata:
 -- aste = [id, lat, lng, prezzo_base, data_vendita, categoria, citta, provincia, geo_fonte, disponibilita]
